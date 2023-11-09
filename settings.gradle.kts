@@ -4,4 +4,4 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-rootProject.name = "miraiDemo"
+rootProject.name = "groupManager"

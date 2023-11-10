@@ -7,6 +7,7 @@ import net.mamoe.mirai.event.events.GroupMessageEvent
 import net.mamoe.mirai.message.data.content
 import net.mamoe.mirai.utils.MiraiLogger
 import org.hezistudio.storage.DatabaseHelper
+import org.hezistudio.storage.cmdDeal
 import java.nio.file.Path
 
 object MyListener:ListenerHost{
@@ -16,6 +17,18 @@ object MyListener:ListenerHost{
 
     @EventHandler
     suspend fun test(e:GroupMessageEvent){
+        testMod(e)
+        val cmdResult = cmdDeal(e)
+        when (cmdResult){
+            false->{
+                e.group.sendMessage("指令出错，请联系管理员")
+            }
+            null->{return}
+            true->{return}
+        }
+    }
+
+    private suspend fun testMod(e: GroupMessageEvent){
         if (e.message.content=="测试"){
             DatabaseHelper.registerUser(e.sender.id,e.group.id,e.sender.nick)
             val r = DatabaseHelper.findUser(e.sender.id)
@@ -25,9 +38,6 @@ object MyListener:ListenerHost{
                 e.group.sendMessage("something wrong...")
             }
         }
-
     }
-
-
 
 }

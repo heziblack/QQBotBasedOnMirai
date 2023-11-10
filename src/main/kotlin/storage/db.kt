@@ -1,13 +1,15 @@
 package org.hezistudio.storage
 
+//import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDate
-import org.hezistudio.storage.Users.default
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.dao.*
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.kotlin.datetime.date
+import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+//import java.time.LocalDate
 import java.util.Date
 
 object Users: IntIdTable(){
@@ -27,14 +29,14 @@ class User(id:EntityID<Int>):IntEntity(id){
 
 object SignIns:LongIdTable(){
     val qq:Column<Long> = long("qq")
-    val lastDate:Column<LocalDate> = date("date")
+    val lastDate:Column<LocalDate> = date("last_sign_in")
     val consecutiveDays:Column<Int> = integer("consecutive_days")
 }
 
 class UserSignIn(id: EntityID<Long>):LongEntity(id){
     companion object:LongEntityClass<UserSignIn>(SignIns)
     var qq by SignIns.qq
-    var localDate by SignIns.lastDate
+    var lastDate by SignIns.lastDate
     var consecutiveDays by SignIns.consecutiveDays
 }
 

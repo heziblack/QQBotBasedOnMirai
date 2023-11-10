@@ -6,23 +6,28 @@ import net.mamoe.mirai.event.events.GroupMemberEvent
 import net.mamoe.mirai.event.events.GroupMessageEvent
 import net.mamoe.mirai.message.data.content
 import net.mamoe.mirai.utils.MiraiLogger
+import org.hezistudio.storage.DatabaseHelper
 import java.nio.file.Path
 
 object MyListener:ListenerHost{
-    var dataFolder: Path? = null
-    var configFolder: Path? = null
-    var logger:MiraiLogger? = null
+    val configPath: Path = MyPluginMain.configFolderPath
+    val dataPath: Path = MyPluginMain.dataFolderPath
+    val logger: MiraiLogger = MyPluginMain.logger
+
     @EventHandler
     suspend fun test(e:GroupMessageEvent){
-        if (e.message.content=="路径"){
-            e.group.sendMessage(dataFolder.toString()+"\n"+ configFolder.toString())
+        if (e.message.content=="测试"){
+            DatabaseHelper.registerUser(e.sender.id,e.group.id,e.sender.nick)
+            val r = DatabaseHelper.findUser(e.sender.id)
+            if (r!=null){
+                e.group.sendMessage("${r.nick}:${r.id} in ${r.firstRegisterGroup}")
+            }else{
+                e.group.sendMessage("something wrong...")
+            }
+
         }
     }
-    /**初始化操作, 保存插件的必要线索*/
-    public fun initFunc(dp:Path,cp:Path,lgr:MiraiLogger){
-        dataFolder = dp
-        configFolder = cp
-        logger = lgr
-    }
+
+
 
 }

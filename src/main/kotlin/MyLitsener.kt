@@ -20,12 +20,12 @@ object MyListener:ListenerHost{
             DatabaseHelper.registerUser(e.sender.id,e.group.id,e.sender.nick)
             val r = DatabaseHelper.findUser(e.sender.id)
             if (r!=null){
-                e.group.sendMessage("${r.nick}:${r.id} in ${r.firstRegisterGroup}")
+                e.group.sendMessage("${r.nick}:${r.qq} in ${r.firstRegisterGroup}")
             }else{
                 e.group.sendMessage("something wrong...")
             }
-
         }
+
     }
 
 

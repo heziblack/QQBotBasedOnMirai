@@ -1,6 +1,9 @@
 package org.hezistudio.storage
 
+import net.mamoe.mirai.event.events.MessageEvent
 import org.hezistudio.MyPluginMain
+import org.hezistudio.command.Command
+import org.hezistudio.command.CmdSignIn
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.TransactionManager
@@ -51,6 +54,20 @@ object DatabaseHelper{
         }
     }
 
+    fun getUser(qq: Long,group: Long,nick: String):User{
+        val u = findUser(qq)
+        return if (u!=null) u else{
+            registerUser(qq, group, nick)
+            findUser(qq)!!
+        }
+    }
+}
 
+val cmdList:ArrayList<Command> = arrayListOf(
+    CmdSignIn
+)
+
+fun cmdDeal(e:MessageEvent){
 
 }
+

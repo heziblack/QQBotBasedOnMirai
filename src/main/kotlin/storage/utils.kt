@@ -1,7 +1,6 @@
 package org.hezistudio.storage
 
 import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.plus
 import net.mamoe.mirai.event.events.MessageEvent
@@ -18,7 +17,7 @@ import java.sql.Connection
 
 object DatabaseHelper{
     private val dbFile: File = File(pluginMe.dataFolder,"database.db3")
-    val db by lazy {
+    private val db by lazy {
         Database.connect("jdbc:sqlite:${dbFile}")
     }
     init {
@@ -35,9 +34,10 @@ object DatabaseHelper{
 
     /**在测试阶段必须使用的方法*/
     private fun testDeleteDBFile(){
-        if (dbFile.exists()){
-            val parent = dbFile.parent
-            dbFile.renameTo(File(parent,"backup"+ java.time.LocalDateTime.now()))
+        if (dbFile.exists() && dbFile.isFile){
+            val newFile = File(pluginMe.dataFolder,"backup"+ java.time.LocalDateTime.now().toString())
+            dbFile.renameTo(newFile)
+            dbFile.createNewFile()
         }
     }
 
@@ -73,7 +73,7 @@ object DatabaseHelper{
         get() {
             val ldt = java.time.LocalDateTime.now()
             return LocalDateTime(
-                ldt.dayOfYear,
+                ldt.year,
                 ldt.month,
                 ldt.dayOfMonth,
                 ldt.hour,

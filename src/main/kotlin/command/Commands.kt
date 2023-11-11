@@ -4,7 +4,6 @@ package org.hezistudio.command
 import net.mamoe.mirai.event.events.GroupMessageEvent
 import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.message.data.content
-import org.hezistudio.MyPluginMain
 import org.hezistudio.storage.User
 import org.hezistudio.storage.UserSignIn
 import org.hezistudio.storage.DatabaseHelper as dbh
@@ -37,14 +36,14 @@ object CmdSignIn:Command{
         val newSignIn = newSignIn(user,lastSignIn)
         if (lastSignIn==null){
             e.group.sendMessage("这是你第一天签到")
-        }else if (lastSignIn.lastDate.equals(newSignIn.lastDate)){
+        }else if (lastSignIn.lastDate == newSignIn.lastDate){
             e.group.sendMessage("你已经签过到了")
         }else{
             e.group.sendMessage("签到成功，你已连续签到${newSignIn.consecutiveDays}天")
         }
     }
 
-    fun newSignIn(user: User,userSignIn: UserSignIn?):UserSignIn{
+    private fun newSignIn(user: User, userSignIn: UserSignIn?):UserSignIn{
         return if (userSignIn!=null){
             dbh.updateUserSignIn(user)
         }else{

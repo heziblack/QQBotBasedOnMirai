@@ -29,5 +29,5 @@ dependencies{
     // https://mvnrepository.com/artifact/org.apache.poi/poi
 //    implementation("org.apache.poi:poi:3.9")
     implementation("org.apache.poi:poi-ooxml:4.1.1")
-
+    implementation("com.squareup.okhttp3:okhttp:4.9.0")
 }

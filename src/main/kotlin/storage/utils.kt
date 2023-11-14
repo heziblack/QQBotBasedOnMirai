@@ -4,9 +4,12 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.plus
 import net.mamoe.mirai.event.events.MessageEvent
+import org.hezistudio.MyPluginMain
+import org.hezistudio.command.CmdBackpack
 import org.hezistudio.MyPluginMain as pluginMe
 import org.hezistudio.command.Command
 import org.hezistudio.command.CmdSignIn
+import org.hezistudio.command.SuperAdmin
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.TransactionManager
@@ -21,7 +24,7 @@ object DatabaseHelper{
         Database.connect("jdbc:sqlite:${dbFile}")
     }
     init {
-        testDeleteDBFile() // 重置数据库
+        testDeleteDBFile() // 备份数据库
         TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_SERIALIZABLE
         createDB()
     }
@@ -38,8 +41,11 @@ object DatabaseHelper{
             val ds = java.time.LocalDateTime.now()
             val dds = """${ds.year}-${ds.month.value}-${ds.dayOfMonth}-${ds.hour}-${ds.minute}-${ds.second}"""
             val newFile = File(pluginMe.dataFolder, "backup${dds}.db3")
-            dbFile.renameTo(newFile)
-            dbFile.createNewFile()
+            if(dbFile.copyTo(newFile,true)==newFile){
+                MyPluginMain.logger.info("成功启动时备份数据库")
+            }
+//            if(!dbFile.renameTo(newFile)) MyPluginMain.logger.info("备份数据库文件失败")
+//            if(!dbFile.createNewFile()) MyPluginMain.logger.info("创建新数据库文件失败")
         }
     }
 
@@ -122,7 +128,7 @@ object DatabaseHelper{
 }
 
 val cmdList:ArrayList<Command> = arrayListOf(
-    CmdSignIn
+    CmdSignIn, CmdBackpack, SuperAdmin
 )
 
 suspend fun cmdDeal(e:MessageEvent):Boolean?{

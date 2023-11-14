@@ -2,7 +2,10 @@ package org.hezistudio.command
 
 
 import net.mamoe.mirai.event.events.GroupMessageEvent
+import net.mamoe.mirai.event.events.GroupMessageSyncEvent
 import net.mamoe.mirai.event.events.MessageEvent
+import net.mamoe.mirai.message.data.At
+import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.data.content
 import org.hezistudio.storage.User
 import org.hezistudio.storage.UserSignIn
@@ -23,7 +26,7 @@ object CmdSignIn:Command{
     override val description: String = "完成每日签到，获取签到奖励哦，只接受群聊签到"
     override fun acceptable(e: MessageEvent): Boolean {
         return if (e is GroupMessageEvent){
-            println(e.message.content)
+//            println(e.message.content)
             e.message[1].content == "签到"
         }else false
     }
@@ -78,17 +81,46 @@ object CmdSignIn:Command{
 }
 
 object CmdBackpack:Command{
-    override val name: String
-        get() = TODO("Not yet implemented")
-    override val description: String
-        get() = TODO("Not yet implemented")
+    override val name: String = "背包"
+    override val description: String = "查看当前拥有的物品"
 
     override fun acceptable(e: MessageEvent): Boolean {
-        TODO("Not yet implemented")
+        if (e !is GroupMessageEvent) return false
+        if (e.message.size != 2) return false
+        if (e.message[1] !is PlainText) return false
+        if (e.message[1].content != "背包") return false
+        return true
     }
 
     override suspend fun action(e: MessageEvent) {
-        TODO("Not yet implemented")
+        e as GroupMessageEvent
+        val user = dbh.getUser(e.sender.id,e.group.id,e.sender.nick)
+        if (user.money==0L){
+            e.group.sendMessage("您的背包空空荡荡，什么都没有~")
+        }else{
+            e.group.sendMessage("您当前有积分${user.money}点")
+        }
+    }
+}
+
+object SuperAdmin:Command{
+    override val name: String = "奖励"
+    override val description: String = "奖励玩家积分"
+    private val regex = Regex("""[0-9]{1,5}""")
+    override fun acceptable(e: MessageEvent): Boolean {
+        // GroupMessageSyncEvent
+        if (e !is GroupMessageSyncEvent) return false
+        if (e.message.size != 4) return false
+        if (e.message[1] !is PlainText) return false
+        if (e.message[1].content != "奖励") return false
+        if (e.message[2] !is At) return false
+        if (e.message[3] !is PlainText) return false
+        return regex.matches(e.message[3].content.trimStart())
+    }
+
+    override suspend fun action(e: MessageEvent) {
+        e as GroupMessageSyncEvent
+        e.group.sendMessage("成功触发")
     }
 
 }

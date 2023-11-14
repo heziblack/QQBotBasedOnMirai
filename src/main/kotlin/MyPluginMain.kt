@@ -4,6 +4,7 @@ import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.event.globalEventChannel
 import net.mamoe.mirai.utils.info
+import org.hezistudio.storage.DatabaseHelper
 
 object MyPluginMain : KotlinPlugin(
         JvmPluginDescription(
@@ -17,5 +18,6 @@ object MyPluginMain : KotlinPlugin(
     override fun onEnable() {
 //        MyListener.initMe(configFolderPath, dataFolderPath, logger)
         globalEventChannel().registerListenerHost(MyListener)
+        DatabaseHelper
     }
 }

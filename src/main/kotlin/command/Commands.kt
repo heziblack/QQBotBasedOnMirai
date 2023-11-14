@@ -6,6 +6,8 @@ import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.message.data.content
 import org.hezistudio.storage.User
 import org.hezistudio.storage.UserSignIn
+import kotlin.math.pow
+import kotlin.math.roundToInt
 import org.hezistudio.storage.DatabaseHelper as dbh
 
 interface Command{
@@ -34,12 +36,16 @@ object CmdSignIn:Command{
         val user = dbh.getUser(e.sender.id, e.group.id, e.sender.nick)
         val lastSignIn = dbh.getUserSignIn(user)
         val newSignIn = newSignIn(user,lastSignIn)
+        val awards = signInAwards(newSignIn.consecutiveDays)
+        val update = user.money + awards
         if (lastSignIn==null){
-            e.group.sendMessage("这是你第一天签到")
+            e.group.sendMessage("这是你第一天签到, 获得积分${awards}点")
+            dbh.addMoney(user,awards.toLong())
         }else if (lastSignIn.lastDate == newSignIn.lastDate){
-            e.group.sendMessage("你已经签过到了")
+            e.group.sendMessage("你已经签过到了, 今日获得签到积分${awards}点, 当前有${user.money}点")
         }else{
-            e.group.sendMessage("签到成功，你已连续签到${newSignIn.consecutiveDays}天")
+            e.group.sendMessage("签到成功, 你已连续签到${newSignIn.consecutiveDays}天, 获得积分${awards}点, 当前有${update}点")
+            dbh.addMoney(user,awards.toLong())
         }
     }
 
@@ -49,6 +55,40 @@ object CmdSignIn:Command{
         }else{
             dbh.createUserSignIn(user)
         }
+    }
+
+    private fun signInAwards(days:Int):Int{
+        val d = days.toDouble()
+        return when{
+            days < 100 ->{
+                val head = ((d+10)/40)
+                (((3.0).pow(head) * 8 ) - 8).roundToInt()
+
+            }
+            days >= 100 ->{
+                val bl = (d-99).pow(0.5) +156
+                bl.roundToInt()
+            }
+            else ->{
+                0
+            }
+        }
+    }
+
+}
+
+object CmdBackpack:Command{
+    override val name: String
+        get() = TODO("Not yet implemented")
+    override val description: String
+        get() = TODO("Not yet implemented")
+
+    override fun acceptable(e: MessageEvent): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun action(e: MessageEvent) {
+        TODO("Not yet implemented")
     }
 
 }

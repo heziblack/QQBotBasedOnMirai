@@ -7,6 +7,7 @@ import net.mamoe.mirai.message.data.content
 import net.mamoe.mirai.utils.MiraiLogger
 import org.hezistudio.storage.DatabaseHelper
 import org.hezistudio.storage.cmdDeal
+import org.hezistudio.storage.groupWhitelist
 import java.nio.file.Path
 
 object MyListener:ListenerHost{
@@ -16,6 +17,7 @@ object MyListener:ListenerHost{
 
     @EventHandler
     suspend fun test(e:GroupMessageEvent){
+        if (!whitelistCheck(e.group.id)) return
         testMod(e)
         val cmdResult = cmdDeal(e)
         when (cmdResult){
@@ -37,6 +39,10 @@ object MyListener:ListenerHost{
                 e.group.sendMessage("something wrong...")
             }
         }
+    }
+
+    private fun whitelistCheck(gn:Long):Boolean{
+        return gn in groupWhitelist
     }
 
 }

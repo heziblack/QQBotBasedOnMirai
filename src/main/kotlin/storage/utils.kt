@@ -28,14 +28,16 @@ object DatabaseHelper{
 
     private fun createDB(){
         transaction(db) {
-            SchemaUtils.create(Users,SignIns)
+            SchemaUtils.create(Users, SignIns)
         }
     }
 
     /**在测试阶段必须使用的方法*/
     private fun testDeleteDBFile(){
         if (dbFile.exists() && dbFile.isFile){
-            val newFile = File(pluginMe.dataFolder,"backup"+ java.time.LocalDateTime.now().toString())
+            val ds = java.time.LocalDateTime.now()
+            val dds = """${ds.year}-${ds.month.value}-${ds.dayOfMonth}-${ds.hour}-${ds.minute}-${ds.second}"""
+            val newFile = File(pluginMe.dataFolder, "backup${dds}.db3")
             dbFile.renameTo(newFile)
             dbFile.createNewFile()
         }
@@ -67,6 +69,10 @@ object DatabaseHelper{
             registerUser(qq, group, nick)
             findUser(qq)!!
         }
+    }
+
+    fun addMoney(user: User, add:Long){
+        transaction(db){ user.money += add }
     }
 
     val currentDateTime:LocalDateTime
@@ -136,4 +142,5 @@ suspend fun cmdDeal(e:MessageEvent):Boolean?{
 //    pluginMe.logger.info("未匹配到指令")
     return null
 }
-
+/**功能白名单*/
+val groupWhitelist:ArrayList<Long> = arrayListOf(795327860L,116143851L)

@@ -30,4 +30,7 @@ dependencies{
 //    implementation("org.apache.poi:poi:3.9")
     implementation("org.apache.poi:poi-ooxml:4.1.1")
     implementation("com.squareup.okhttp3:okhttp:4.9.0")
+    // https://mvnrepository.com/artifact/com.google.code.gson/gson
+    implementation("com.google.code.gson:gson:2.8.9")
+
 }

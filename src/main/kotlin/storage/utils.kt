@@ -125,7 +125,7 @@ object DatabaseHelper{
 }
 
 val cmdList:ArrayList<Command> = arrayListOf(
-    CmdSignIn, CmdBackpack
+    CmdSignIn, CmdBackpack, CmdHentaiPic
 )
 val syncCmdList:ArrayList<SyncCommand> = arrayListOf(
     AwardByHost, Test
@@ -149,3 +149,5 @@ suspend fun cmdDeal(e:MessageEvent):Boolean?{
 }
 /**功能白名单*/
 val groupWhitelist:ArrayList<Long> = arrayListOf(795327860L,116143851L,190772405L)
+
+

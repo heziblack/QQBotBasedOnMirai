@@ -5,11 +5,8 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.plus
 import net.mamoe.mirai.event.events.MessageEvent
 import org.hezistudio.MyPluginMain
-import org.hezistudio.command.CmdBackpack
+import org.hezistudio.command.*
 import org.hezistudio.MyPluginMain as pluginMe
-import org.hezistudio.command.Command
-import org.hezistudio.command.CmdSignIn
-import org.hezistudio.command.SuperAdmin
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.TransactionManager
@@ -128,7 +125,10 @@ object DatabaseHelper{
 }
 
 val cmdList:ArrayList<Command> = arrayListOf(
-    CmdSignIn, CmdBackpack, SuperAdmin
+    CmdSignIn, CmdBackpack
+)
+val syncCmdList:ArrayList<SyncCommand> = arrayListOf(
+    AwardByHost, Test
 )
 
 suspend fun cmdDeal(e:MessageEvent):Boolean?{
@@ -145,8 +145,7 @@ suspend fun cmdDeal(e:MessageEvent):Boolean?{
         pluginMe.logger.info("执行出错")
         return false
     }
-//    pluginMe.logger.info("未匹配到指令")
     return null
 }
 /**功能白名单*/
-val groupWhitelist:ArrayList<Long> = arrayListOf(795327860L,116143851L)
+val groupWhitelist:ArrayList<Long> = arrayListOf(795327860L,116143851L,190772405L)

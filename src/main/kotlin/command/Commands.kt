@@ -103,13 +103,20 @@ object CmdBackpack:Command{
     }
 }
 
-object SuperAdmin:Command{
+
+interface SyncCommand{
+    val name:String
+    val description:String
+    //    val acceptTypes:ArrayList<JavaType>
+    fun acceptable(e: GroupMessageSyncEvent):Boolean
+    suspend fun action(e:GroupMessageSyncEvent)
+}
+object AwardByHost:SyncCommand{
     override val name: String = "奖励"
     override val description: String = "奖励玩家积分"
-    private val regex = Regex("""[0-9]{1,5}""")
-    override fun acceptable(e: MessageEvent): Boolean {
+    private val regex = Regex("""[1-9][0-9]{0,5}""")
+    override fun acceptable(e: GroupMessageSyncEvent): Boolean {
         // GroupMessageSyncEvent
-        if (e !is GroupMessageSyncEvent) return false
         if (e.message.size != 4) return false
         if (e.message[1] !is PlainText) return false
         if (e.message[1].content != "奖励") return false
@@ -118,9 +125,33 @@ object SuperAdmin:Command{
         return regex.matches(e.message[3].content.trimStart())
     }
 
-    override suspend fun action(e: MessageEvent) {
-        e as GroupMessageSyncEvent
-        e.group.sendMessage("成功触发")
+    override suspend fun action(e: GroupMessageSyncEvent) {
+        val msg = e.message
+        val target = (msg[2] as At).target
+        val tEntity = e.group.members[target]
+        val user = dbh.getUser(tEntity?.id?:target,e.group.id,tEntity?.nick?:"用户${target}")
+        val awardsNumber = msg[3].content.trimStart().toLong()
+
+        if (awardsNumber<=0) throw Exception("必须是正整数")
+        dbh.addMoney(user,awardsNumber)
+        val newUser = dbh.getUser(user.qq,user.firstRegisterGroup,user.nick)
+        e.group.sendMessage("成功给[${newUser.nick}]增加[${awardsNumber}]点积分, ta的当前积分:${newUser.money}")
+    }
+
+
+
+}
+
+object Test:SyncCommand{
+    override val name: String = "测试"
+    override val description: String = "自用测试模块"
+
+    override fun acceptable(e: GroupMessageSyncEvent): Boolean {
+        return (e.message.size == 2 && e.message[1].content == "cs")
+    }
+
+    override suspend fun action(e: GroupMessageSyncEvent) {
+        e.group.sendMessage("测试模块未加载任何内容")
     }
 
 }

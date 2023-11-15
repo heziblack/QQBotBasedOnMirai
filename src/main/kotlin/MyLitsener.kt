@@ -3,11 +3,13 @@ package org.hezistudio
 import net.mamoe.mirai.event.EventHandler
 import net.mamoe.mirai.event.ListenerHost
 import net.mamoe.mirai.event.events.GroupMessageEvent
+import net.mamoe.mirai.event.events.GroupMessageSyncEvent
 import net.mamoe.mirai.message.data.content
 import net.mamoe.mirai.utils.MiraiLogger
 import org.hezistudio.storage.DatabaseHelper
 import org.hezistudio.storage.cmdDeal
 import org.hezistudio.storage.groupWhitelist
+import org.hezistudio.storage.syncCmdList
 import java.nio.file.Path
 
 object MyListener:ListenerHost{
@@ -18,7 +20,6 @@ object MyListener:ListenerHost{
     @EventHandler
     suspend fun test(e:GroupMessageEvent){
         if (!whitelistCheck(e.group.id)) return
-        testMod(e)
         val cmdResult = cmdDeal(e)
         when (cmdResult){
             false->{
@@ -29,15 +30,21 @@ object MyListener:ListenerHost{
         }
     }
 
-    private suspend fun testMod(e: GroupMessageEvent){
-        if (e.message.content=="测试"){
-            DatabaseHelper.registerUser(e.sender.id,e.group.id,e.sender.nick)
-            val r = DatabaseHelper.findUser(e.sender.id)
-            if (r!=null){
-                e.group.sendMessage("${r.nick}:${r.qq} in ${r.firstRegisterGroup}")
-            }else{
-                e.group.sendMessage("something wrong...")
+    @EventHandler
+    suspend fun syncMessage(e:GroupMessageSyncEvent){
+        try{
+            for (cmd in syncCmdList) {
+                if (cmd.acceptable(e)) {
+                    MyPluginMain.logger.info("执行${cmd.name}指令")
+                    cmd.action(e)
+                    MyPluginMain.logger.info("执行完毕")
+                }
             }
+        }catch (exc:Exception){
+            MyPluginMain.logger.info("执行出错")
+            MyPluginMain.logger.error(exc)
+            e.group.sendMessage("坏、坏掉了")
+//            return false
         }
     }
 

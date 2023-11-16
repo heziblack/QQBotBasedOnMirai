@@ -128,7 +128,7 @@ val cmdList:ArrayList<Command> = arrayListOf(
     CmdSignIn, CmdBackpack, CmdHentaiPic
 )
 val syncCmdList:ArrayList<SyncCommand> = arrayListOf(
-    AwardByHost, Test
+    AwardByHost, Test, AddOrRemoveService
 )
 
 suspend fun cmdDeal(e:MessageEvent):Boolean?{

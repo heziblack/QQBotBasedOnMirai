@@ -1,10 +1,12 @@
 package org.hezistudio.command
 
+import net.mamoe.mirai.contact.nameCardOrNick
 import net.mamoe.mirai.event.events.GroupMessageSyncEvent
 import net.mamoe.mirai.message.data.At
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.data.content
 import org.hezistudio.storage.DatabaseHelper
+import org.hezistudio.storage.groupWhitelist
 
 object AwardByHost:SyncCommand{
     override val name: String = "奖励"
@@ -42,7 +44,46 @@ object Test:SyncCommand{
     }
 
     override suspend fun action(e: GroupMessageSyncEvent) {
-        e.group.sendMessage("测试模块未加载任何内容")
+//        val tw = e.group.members.random()
+//        tw.nameCard = "!"+tw.nameCardOrNick
+        e.group.sendMessage("当前未加载任何测试模块")
+    }
+
+}
+
+object AddOrRemoveService:SyncCommand{
+    override val name: String = "添加或移除群服务"
+    override val description: String = "将收到指令的群纳入或移出指令执行范围"
+    private val cmds:ArrayList<String> = arrayListOf("添加服务","移除服务")
+
+    override fun acceptable(e: GroupMessageSyncEvent): Boolean {
+        if(e.message.size != 2) return false
+        if (e.message[1] !is PlainText) return false
+        if ((e.message[1] as PlainText).content !in cmds) return false
+        return true
+    }
+
+    override suspend fun action(e: GroupMessageSyncEvent) {
+        val cmd = e.message[1].content
+        val gid = e.group.id
+        when(cmd){
+            cmds[0]->{
+                if (gid in groupWhitelist){
+                    e.group.sendMessage("本群已在服务范围中")
+                }else{
+                    groupWhitelist.add(gid)
+                    e.group.sendMessage("添加成功")
+                }
+            }
+            cmds[1]->{
+                if (gid in groupWhitelist){
+                    groupWhitelist.remove(gid)
+                    e.group.sendMessage("移除成功")
+                }else{
+                    e.group.sendMessage("本群不在服务范围中")
+                }
+            }
+        }
     }
 
 }

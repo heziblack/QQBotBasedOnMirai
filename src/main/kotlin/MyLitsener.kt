@@ -4,9 +4,7 @@ import net.mamoe.mirai.event.EventHandler
 import net.mamoe.mirai.event.ListenerHost
 import net.mamoe.mirai.event.events.GroupMessageEvent
 import net.mamoe.mirai.event.events.GroupMessageSyncEvent
-import net.mamoe.mirai.message.data.content
 import net.mamoe.mirai.utils.MiraiLogger
-import org.hezistudio.storage.DatabaseHelper
 import org.hezistudio.storage.cmdDeal
 import org.hezistudio.storage.groupWhitelist
 import org.hezistudio.storage.syncCmdList
@@ -44,7 +42,6 @@ object MyListener:ListenerHost{
             MyPluginMain.logger.info("执行出错")
             MyPluginMain.logger.error(exc)
             e.group.sendMessage("坏、坏掉了")
-//            return false
         }
     }
 

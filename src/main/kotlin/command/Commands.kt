@@ -7,9 +7,7 @@ import kotlinx.coroutines.withContext
 import net.mamoe.mirai.contact.Contact.Companion.sendImage
 import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.event.events.GroupMessageEvent
-import net.mamoe.mirai.event.events.GroupMessageSyncEvent
 import net.mamoe.mirai.event.events.MessageEvent
-import net.mamoe.mirai.message.data.At
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.data.content
 import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
@@ -27,13 +25,6 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 import org.hezistudio.storage.DatabaseHelper as dbh
 
-interface Command{
-    val name:String
-    val description:String
-//    val acceptTypes:ArrayList<JavaType>
-    fun acceptable(e: MessageEvent):Boolean
-    suspend fun action(e:MessageEvent)
-}
 
 object CmdSignIn:Command{
     override val name: String = "签到"
@@ -91,13 +82,10 @@ object CmdSignIn:Command{
             }
         }
     }
-
 }
-
 object CmdBackpack:Command{
     override val name: String = "背包"
     override val description: String = "查看当前拥有的物品"
-
     override fun acceptable(e: MessageEvent): Boolean {
         if (e !is GroupMessageEvent) return false
         if (e.message.size != 2) return false
@@ -105,7 +93,6 @@ object CmdBackpack:Command{
         if (e.message[1].content != "背包") return false
         return true
     }
-
     override suspend fun action(e: MessageEvent) {
         e as GroupMessageEvent
         val user = dbh.getUser(e.sender.id,e.group.id,e.sender.nick)
@@ -116,65 +103,13 @@ object CmdBackpack:Command{
         }
     }
 }
-
-
-interface SyncCommand{
-    val name:String
-    val description:String
-    //    val acceptTypes:ArrayList<JavaType>
-    fun acceptable(e: GroupMessageSyncEvent):Boolean
-    suspend fun action(e:GroupMessageSyncEvent)
-}
-object AwardByHost:SyncCommand{
-    override val name: String = "奖励"
-    override val description: String = "奖励玩家积分"
-    private val regex = Regex("""[1-9][0-9]{0,5}""")
-    override fun acceptable(e: GroupMessageSyncEvent): Boolean {
-        // GroupMessageSyncEvent
-        if (e.message.size != 4) return false
-        if (e.message[1] !is PlainText) return false
-        if (e.message[1].content != "奖励") return false
-        if (e.message[2] !is At) return false
-        if (e.message[3] !is PlainText) return false
-        return regex.matches(e.message[3].content.trimStart())
-    }
-
-    override suspend fun action(e: GroupMessageSyncEvent) {
-        val msg = e.message
-        val target = (msg[2] as At).target
-        val tEntity = e.group.members[target]
-        val user = dbh.getUser(tEntity?.id?:target,e.group.id,tEntity?.nick?:"用户${target}")
-        val awardsNumber = msg[3].content.trimStart().toLong()
-
-        if (awardsNumber<=0) throw Exception("必须是正整数")
-        dbh.addMoney(user,awardsNumber)
-        val newUser = dbh.getUser(user.qq,user.firstRegisterGroup,user.nick)
-        e.group.sendMessage("成功给[${newUser.nick}]增加[${awardsNumber}]点积分, ta的当前积分:${newUser.money}")
-    }
-
-
-
-}
-
-object Test:SyncCommand{
-    override val name: String = "测试"
-    override val description: String = "自用测试模块"
-
-    override fun acceptable(e: GroupMessageSyncEvent): Boolean {
-        return (e.message.size == 2 && e.message[1].content == "cs")
-    }
-
-    override suspend fun action(e: GroupMessageSyncEvent) {
-        e.group.sendMessage("测试模块未加载任何内容")
-    }
-
-}
-
 object CmdHentaiPic:Command{
-    override val name: String = "cancanneed"
+    override val name: String = "kknd"
     override val description: String = "普通色图功能"
     private val price:Int = 70
     private val lolicon = "https://api.lolicon.app/setu/v2?size=original&size=regular"
+//    private val
+//    private val
     override fun acceptable(e: MessageEvent): Boolean {
         if (e !is GroupMessageEvent) return false
         val m = e.message
@@ -258,7 +193,7 @@ object CmdHentaiPic:Command{
             val a = ipt.readText()
     //            println(a)
             val gson = Gson()
-            val obj = gson.fromJson<SetuBean>(a, SetuBean::class.java)
+            val obj = gson.fromJson(a, SetuBean::class.java)
             obj.data[0].urls
         }else{
             null
@@ -305,6 +240,22 @@ object CmdHentaiPic:Command{
             }
         }
         return null
+    }
+
+    private fun createClient():OkHttpClient{
+        TODO()
+    }
+
+}
+object CmdWorkForMoney:Command{
+    override val name: String = "打工"
+    override val description: String = "打工换取积分"
+    override fun acceptable(e: MessageEvent): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun action(e: MessageEvent) {
+        TODO("Not yet implemented")
     }
 
 }

@@ -46,7 +46,7 @@ object DatabaseHelper{
         }
     }
 
-    fun registerUser(qq:Long,group:Long,nick:String):Boolean{
+    private fun registerUser(qq:Long,group:Long,nick:String):Boolean{
         return transaction(db) {
             if(User.find { Users.qq eq qq }.empty()) {
                 User.new {
@@ -60,7 +60,7 @@ object DatabaseHelper{
         } != null
     }
 
-    fun findUser(qq:Long):User?{
+    private fun findUser(qq:Long):User?{
         return transaction {
             User.find{ Users.qq eq qq }.firstOrNull()
         }

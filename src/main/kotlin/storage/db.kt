@@ -2,6 +2,7 @@ package org.hezistudio.storage
 
 //import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.dao.*
@@ -38,5 +39,20 @@ class UserSignIn(id: EntityID<Long>):LongEntity(id){
     var qq by SignIns.qq
     var lastDate by SignIns.lastDate
     var consecutiveDays by SignIns.consecutiveDays
+}
+
+object UserWorks:LongIdTable(){
+    val qq:Column<Long> = long("qq")
+    val workStamp:Column<LocalDateTime> = datetime("work_Stamp")
+    val moneyCounter:Column<Long> = long("money_counter")
+    val timer:Column<Long> = long("timer")
+}
+
+class Work(id: EntityID<Long>):LongEntity(id){
+    companion object:LongEntityClass<Work>(UserWorks)
+    var qq by UserWorks.qq
+    var workStamp by UserWorks.workStamp
+    var moneyCounter by UserWorks.moneyCounter
+    var timer by UserWorks.timer
 }
 

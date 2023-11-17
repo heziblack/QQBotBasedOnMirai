@@ -6,17 +6,17 @@ import net.mamoe.mirai.event.events.GroupMessageEvent
 import net.mamoe.mirai.event.events.GroupMessageSyncEvent
 import net.mamoe.mirai.utils.MiraiLogger
 import org.hezistudio.storage.cmdDeal
-import org.hezistudio.storage.groupWhitelist
+import org.hezistudio.storage.groupList
 import org.hezistudio.storage.syncCmdList
 import java.nio.file.Path
 
 object MyListener:ListenerHost{
     val configPath: Path = MyPluginMain.configFolderPath
     val dataPath: Path = MyPluginMain.dataFolderPath
-    val logger: MiraiLogger = MyPluginMain.logger
+    private val logger: MiraiLogger = MyPluginMain.logger
 
     @EventHandler
-    suspend fun test(e:GroupMessageEvent){
+    suspend fun groupMessageHandler(e:GroupMessageEvent){
         if (!whitelistCheck(e.group.id)) return
         val cmdResult = cmdDeal(e)
         when (cmdResult){
@@ -33,20 +33,19 @@ object MyListener:ListenerHost{
         try{
             for (cmd in syncCmdList) {
                 if (cmd.acceptable(e)) {
-                    MyPluginMain.logger.info("执行${cmd.name}指令")
+                    logger.info("执行${cmd.name}指令")
                     cmd.action(e)
-                    MyPluginMain.logger.info("执行完毕")
+                    logger.info("执行完毕")
                 }
             }
         }catch (exc:Exception){
-            MyPluginMain.logger.info("执行出错")
-            MyPluginMain.logger.error(exc)
+            logger.info("执行出错")
+            logger.error(exc)
             e.group.sendMessage("坏、坏掉了")
         }
     }
 
     private fun whitelistCheck(gn:Long):Boolean{
-        return gn in groupWhitelist
+        return gn in groupList.groupList
     }
-
 }

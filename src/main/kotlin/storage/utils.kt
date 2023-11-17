@@ -1,5 +1,6 @@
 package org.hezistudio.storage
 
+import com.google.gson.Gson
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.plus
@@ -13,6 +14,7 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.sql.Connection
+import kotlin.math.absoluteValue
 
 
 object DatabaseHelper{
@@ -28,11 +30,12 @@ object DatabaseHelper{
 
     private fun createDB(){
         transaction(db) {
-            SchemaUtils.create(Users, SignIns)
+            SchemaUtils.create(Users, SignIns, UserWorks)
+            SchemaUtils.createMissingTablesAndColumns(Users, SignIns, UserWorks)
         }
     }
 
-    /**在测试阶段必须使用的方法*/
+    /**在测试阶段必须使用的方法, 每次启动插件时备份之前的数据库数据*/
     private fun testDeleteDBFile(){
         if (dbFile.exists() && dbFile.isFile){
             val ds = java.time.LocalDateTime.now()
@@ -148,6 +151,41 @@ suspend fun cmdDeal(e:MessageEvent):Boolean?{
     return null
 }
 /**功能白名单*/
-val groupWhitelist:ArrayList<Long> = arrayListOf(795327860L,116143851L,190772405L)
-
-
+val groupList:GroupWhitelist = loadGroupWhitelist()
+val groupListFile:File = File(MyPluginMain.configFolder,"whitelist.json")
+fun loadGroupWhitelist():GroupWhitelist{
+    val gson = Gson()
+    return if (groupListFile.exists()){
+        groupListFile.reader().use { gson.fromJson(it, GroupWhitelist::class.java) }
+    }else{
+        groupListFile.createNewFile()
+        val t = GroupWhitelist.create()
+        val s = gson.toJson(t)
+        groupListFile.writeText(s)
+        t
+    }
+}
+fun saveGroupWhitelist(){
+    val gson = Gson()
+    val s = gson.toJson(groupList)
+    groupListFile.writeText(s)
+}
+/**从配置中读取的端口号，默认为0*/
+val proxyPort:Int = proxySetting()
+private fun proxySetting():Int{
+    val f = File(MyPluginMain.configFolder,"port.txt")
+    return if (f.exists() && f.isFile){
+        val a = f.readText()
+        try{
+            a.toInt().absoluteValue
+        }catch (exc:Exception){
+            0
+        }
+    }else if (!f.exists()){
+        f.createNewFile()
+        f.writeText("0")
+        0
+    }else{
+        0
+    }
+}

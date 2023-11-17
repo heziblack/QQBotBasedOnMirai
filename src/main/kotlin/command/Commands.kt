@@ -16,9 +16,12 @@ import okhttp3.Request
 import org.hezistudio.storage.SetuBean
 import org.hezistudio.storage.User
 import org.hezistudio.storage.UserSignIn
+import org.hezistudio.storage.proxyPort
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.net.InetSocketAddress
+import java.net.Proxy
 import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
 import kotlin.math.pow
@@ -108,7 +111,22 @@ object CmdHentaiPic:Command{
     override val description: String = "普通色图功能"
     private val price:Int = 70
     private val lolicon = "https://api.lolicon.app/setu/v2?size=original&size=regular"
-//    private val
+    private val clientProxy = OkHttpClient.Builder()
+        .connectTimeout(50000,TimeUnit.MILLISECONDS)
+        .readTimeout(50000,TimeUnit.MILLISECONDS)
+        .followRedirects(true)
+        .followSslRedirects(true)
+        .proxy(Proxy(Proxy.Type.SOCKS, InetSocketAddress(proxyPort)))
+//        .cache(Cache(File("okCache"),1024*8*1024*30))
+        .build()
+    private val clientNormal = OkHttpClient.Builder()
+        .connectTimeout(50000,TimeUnit.MILLISECONDS)
+        .readTimeout(50000,TimeUnit.MILLISECONDS)
+        .followRedirects(true)
+        .followSslRedirects(true)
+        .proxy(Proxy(Proxy.Type.SOCKS, InetSocketAddress(proxyPort)))
+//        .cache(Cache(File("okCache"),1024*8*1024*30))
+        .build()
 //    private val
     override fun acceptable(e: MessageEvent): Boolean {
         if (e !is GroupMessageEvent) return false
@@ -157,6 +175,7 @@ object CmdHentaiPic:Command{
     private suspend fun sendLostMsg(g:Group){
         g.sendMessage("链接丢失，跑到异次元啦！")
     }
+
 
     private suspend fun sendImage(g:Group,img:BufferedImage){
         val opt = ByteArrayOutputStream()
@@ -251,11 +270,22 @@ object CmdWorkForMoney:Command{
     override val name: String = "打工"
     override val description: String = "打工换取积分"
     override fun acceptable(e: MessageEvent): Boolean {
-        TODO("Not yet implemented")
+        if (e !is GroupMessageEvent) return false
+        val msg = e.message
+        if (msg.size != 2) return false
+        val text = e.message[1].content
+        if (text != "打工") return false
+        return false
     }
 
     override suspend fun action(e: MessageEvent) {
-        TODO("Not yet implemented")
+        e as GroupMessageEvent
+        val g = e.group
+        if (g.id == 190772405L){
+            g.sendMessage("功能还在开发中")
+        }else{
+            g.sendMessage("您不能打工哦，要在群聊190772405才能打工")
+        }
     }
 
 }

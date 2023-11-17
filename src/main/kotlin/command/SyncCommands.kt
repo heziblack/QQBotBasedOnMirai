@@ -1,12 +1,12 @@
 package org.hezistudio.command
 
-import net.mamoe.mirai.contact.nameCardOrNick
 import net.mamoe.mirai.event.events.GroupMessageSyncEvent
 import net.mamoe.mirai.message.data.At
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.data.content
 import org.hezistudio.storage.DatabaseHelper
-import org.hezistudio.storage.groupWhitelist
+import org.hezistudio.storage.groupList
+import org.hezistudio.storage.saveGroupWhitelist
 
 object AwardByHost:SyncCommand{
     override val name: String = "奖励"
@@ -66,18 +66,23 @@ object AddOrRemoveService:SyncCommand{
     override suspend fun action(e: GroupMessageSyncEvent) {
         val cmd = e.message[1].content
         val gid = e.group.id
+        val gl = groupList.groupList
         when(cmd){
             cmds[0]->{
-                if (gid in groupWhitelist){
+                if (gid in gl){
                     e.group.sendMessage("本群已在服务范围中")
                 }else{
-                    groupWhitelist.add(gid)
+//                    groupWhitelist.add(gid)
+                    groupList.add(gid,0)
+                    saveGroupWhitelist()
                     e.group.sendMessage("添加成功")
                 }
             }
             cmds[1]->{
-                if (gid in groupWhitelist){
-                    groupWhitelist.remove(gid)
+                if (gid in gl){
+//                    groupWhitelist.remove(gid)
+                    groupList.remove(gid)
+                    saveGroupWhitelist()
                     e.group.sendMessage("移除成功")
                 }else{
                     e.group.sendMessage("本群不在服务范围中")

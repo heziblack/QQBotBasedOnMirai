@@ -6,6 +6,7 @@ import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.data.content
 import org.hezistudio.storage.DatabaseHelper
 import org.hezistudio.storage.groupList
+import org.hezistudio.storage.proxyPort
 import org.hezistudio.storage.saveGroupWhitelist
 
 object AwardByHost:SyncCommand{
@@ -46,7 +47,8 @@ object Test:SyncCommand{
     override suspend fun action(e: GroupMessageSyncEvent) {
 //        val tw = e.group.members.random()
 //        tw.nameCard = "!"+tw.nameCardOrNick
-        e.group.sendMessage("当前未加载任何测试模块")
+//        e.group.sendMessage("当前端口${proxyPort}")
+        e.group.sendMessage("no func")
     }
 
 }

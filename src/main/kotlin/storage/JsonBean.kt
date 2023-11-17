@@ -120,4 +120,11 @@ class GroupWhitelist(
         }
     }
 
+    fun copy(origin:GroupWhitelist){
+        this.groups.clear()
+        for (o in origin.groups){
+            this.groups.add(o)
+        }
+    }
+
 }

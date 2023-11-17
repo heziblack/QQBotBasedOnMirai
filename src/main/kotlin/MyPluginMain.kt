@@ -4,6 +4,9 @@ import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.event.globalEventChannel
 import org.hezistudio.storage.DatabaseHelper
+import org.hezistudio.storage.loadGroupWhitelist
+import org.hezistudio.storage.proxyPort
+import org.hezistudio.storage.proxySetting
 
 object MyPluginMain : KotlinPlugin(
         JvmPluginDescription(
@@ -17,6 +20,8 @@ object MyPluginMain : KotlinPlugin(
     override fun onEnable() {
 //        MyListener.initMe(configFolderPath, dataFolderPath, logger)
         globalEventChannel().registerListenerHost(MyListener)
+        proxyPort = proxySetting()
+        loadGroupWhitelist()
         DatabaseHelper
     }
 }

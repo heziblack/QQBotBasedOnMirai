@@ -145,24 +145,27 @@ suspend fun cmdDeal(e:MessageEvent):Boolean?{
             }
         }
     }catch (exc:Exception){
-        pluginMe.logger.info("执行出错")
+        pluginMe.logger.error(exc)
+        pluginMe.logger.error("执行出错")
         return false
     }
     return null
 }
 /**功能白名单*/
-val groupList:GroupWhitelist = loadGroupWhitelist()
+val groupList:GroupWhitelist = GroupWhitelist.create()
 val groupListFile:File = File(MyPluginMain.configFolder,"whitelist.json")
-fun loadGroupWhitelist():GroupWhitelist{
+fun loadGroupWhitelist(){
     val gson = Gson()
-    return if (groupListFile.exists()){
-        groupListFile.reader().use { gson.fromJson(it, GroupWhitelist::class.java) }
+    if (groupListFile.exists() && groupListFile.isFile){
+        val fromFile = groupListFile.reader().use {
+            gson.fromJson(it, GroupWhitelist::class.java)
+        }
+        groupList.copy(fromFile)
     }else{
         groupListFile.createNewFile()
         val t = GroupWhitelist.create()
         val s = gson.toJson(t)
         groupListFile.writeText(s)
-        t
     }
 }
 fun saveGroupWhitelist(){
@@ -171,8 +174,9 @@ fun saveGroupWhitelist(){
     groupListFile.writeText(s)
 }
 /**从配置中读取的端口号，默认为0*/
-val proxyPort:Int = proxySetting()
-private fun proxySetting():Int{
+var proxyPort:Int = 0
+
+fun proxySetting():Int{
     val f = File(MyPluginMain.configFolder,"port.txt")
     return if (f.exists() && f.isFile){
         val a = f.readText()

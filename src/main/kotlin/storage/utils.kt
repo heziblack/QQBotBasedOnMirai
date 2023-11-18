@@ -15,6 +15,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.sql.Connection
 import kotlin.math.absoluteValue
+import kotlin.time.Duration
 
 
 object DatabaseHelper{
@@ -124,15 +125,23 @@ object DatabaseHelper{
             s
         }
     }
-    fun userWork(id:Long):Work{
-        Work.find{UserWorks.qq eq id}
-        TODO()
+    fun userWork(id:Long):Work?{
+        return transaction(db){ Work.find { UserWorks.qq eq id }.firstOrNull() }
+    }
+
+    fun userGoWorking(user: User){
+        val userWork = transaction(db){
+            userWork(user.qq)?:Work.new {
+
+            }
+
+        }
     }
 
 }
 
 val cmdList:ArrayList<Command> = arrayListOf(
-    CmdSignIn, CmdBackpack, CmdHentaiPic,
+    CmdSignIn, CmdBackpack, CmdHentaiPic, CmdWorkForMoney
 )
 val syncCmdList:ArrayList<SyncCommand> = arrayListOf(
     AwardByHost, Test, AddOrRemoveService
@@ -158,6 +167,15 @@ suspend fun cmdDeal(e:MessageEvent):Boolean?{
 /**功能白名单*/
 val groupList:GroupWhitelist = GroupWhitelist.create()
 val groupListFile:File = File(MyPluginMain.configFolder,"whitelist.json")
+
+fun userWorkStatueCheck(id: Long):Boolean{
+    val uw = DatabaseHelper.userWork(id)
+    return if (uw == null){
+        true
+    }else{
+        DatabaseHelper.currentDateTime > uw.workStamp
+    }
+}
 fun loadGroupWhitelist(){
     val gson = Gson()
     if (groupListFile.exists() && groupListFile.isFile){

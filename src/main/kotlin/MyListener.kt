@@ -8,6 +8,7 @@ import net.mamoe.mirai.utils.MiraiLogger
 import org.hezistudio.storage.cmdDeal
 import org.hezistudio.storage.groupList
 import org.hezistudio.storage.syncCmdList
+import org.hezistudio.storage.userWorkStatueCheck
 import java.nio.file.Path
 
 object MyListener:ListenerHost{
@@ -19,6 +20,7 @@ object MyListener:ListenerHost{
     suspend fun groupMessageHandler(e:GroupMessageEvent){
         if (!whitelistCheck(e.group.id)) return
         // 加一个用户状态检查
+        if (!userWorkStatueCheck(e.sender.id)) return
         val cmdResult = cmdDeal(e)
         when (cmdResult){
             false->{
@@ -50,8 +52,6 @@ object MyListener:ListenerHost{
         return gn in groupList.groupList
     }
 
-    private fun userStatueCheck(qq:Long):Boolean{
-        TODO()
-    }
+
 
 }

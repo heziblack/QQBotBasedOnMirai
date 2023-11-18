@@ -44,8 +44,8 @@ class UserSignIn(id: EntityID<Long>):LongEntity(id){
 object UserWorks:LongIdTable(){
     val qq:Column<Long> = long("qq")
     val workStamp:Column<LocalDateTime> = datetime("work_Stamp")
-    val moneyCounter:Column<Long> = long("money_counter")
-    val timer:Column<Long> = long("timer")
+    val moneyCounter:Column<Long> = long("money_counter").default(0L)
+    val timer:Column<Long> = long("timer").default(0L)
 }
 
 class Work(id: EntityID<Long>):LongEntity(id){

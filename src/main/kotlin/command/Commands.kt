@@ -266,15 +266,23 @@ object CmdWorkForMoney:Command{
         val msg = e.message
         if (msg.size != 2) return false
         val text = e.message[1].content
-        if (text != "打工") return false
-        return false
+        return text == "打工"
     }
 
     override suspend fun action(e: MessageEvent) {
         e as GroupMessageEvent
         val g = e.group
         if (g.id == 190772405L){
-            g.sendMessage("功能还在开发中")
+//            g.sendMessage("功能还在开发中")
+            val hour = (1..8).random()
+            val user = dbh.getUser(e.sender.id, e.group.id, e.sender.nick)
+            dbh.userGoWorking(user,hour)
+            val workInfo = dbh.userWork(user.qq)!!
+            val userNew = dbh.getUser(user.qq,user.firstRegisterGroup,user.nick)
+            val salary = (hour*(0.8*hour + 10.0)).roundToInt()
+            e.group.sendMessage("随机打工${hour}小时，报酬${salary}积分\n" +
+                    "打工累计时间${workInfo.timer}小时，累计收益${workInfo.moneyCounter}积分\n" +
+                    "接下来${hour}小时内将不再响应您的指令，现有积分${userNew.money}")
         }else{
             g.sendMessage("您不能打工哦，要在群聊190772405才能打工")
         }

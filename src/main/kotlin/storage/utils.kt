@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.plus
+import kotlinx.datetime.toJavaLocalDateTime
 import net.mamoe.mirai.event.events.MessageEvent
 import org.hezistudio.MyPluginMain
 import org.hezistudio.command.*
@@ -15,7 +16,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.sql.Connection
 import kotlin.math.absoluteValue
-import kotlin.time.Duration
+import kotlin.math.roundToInt
 
 
 object DatabaseHelper{
@@ -125,17 +126,26 @@ object DatabaseHelper{
             s
         }
     }
+    /**查找qq号的打工记录，没有则返回空*/
     fun userWork(id:Long):Work?{
         return transaction(db){ Work.find { UserWorks.qq eq id }.firstOrNull() }
     }
 
-    fun userGoWorking(user: User){
-        val userWork = transaction(db){
-            userWork(user.qq)?:Work.new {
-
+    fun userGoWorking(user: User,hour:Int){
+        return transaction(db){
+            val workInfo = userWork(user.qq)?:Work.new {
+                qq = user.qq
+                workStamp = currentDateTime
             }
-
+            val tsJava = currentDateTime.toJavaLocalDateTime().plusHours(hour.toLong())
+            LocalDateTime.parse(tsJava.toString())
+            val salary = (hour*(0.8*hour + 10.0)).roundToInt()
+            workInfo.workStamp = LocalDateTime.parse(tsJava.toString())
+            workInfo.timer += hour
+            workInfo.moneyCounter += salary
+            user.money += salary
         }
+
     }
 
 }

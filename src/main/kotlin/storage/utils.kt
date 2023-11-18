@@ -124,11 +124,15 @@ object DatabaseHelper{
             s
         }
     }
+    fun userWork(id:Long):Work{
+        Work.find{UserWorks.qq eq id}
+        TODO()
+    }
 
 }
 
 val cmdList:ArrayList<Command> = arrayListOf(
-    CmdSignIn, CmdBackpack, CmdHentaiPic
+    CmdSignIn, CmdBackpack, CmdHentaiPic,
 )
 val syncCmdList:ArrayList<SyncCommand> = arrayListOf(
     AwardByHost, Test, AddOrRemoveService

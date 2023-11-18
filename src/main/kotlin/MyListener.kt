@@ -18,6 +18,7 @@ object MyListener:ListenerHost{
     @EventHandler
     suspend fun groupMessageHandler(e:GroupMessageEvent){
         if (!whitelistCheck(e.group.id)) return
+        // 加一个用户状态检查
         val cmdResult = cmdDeal(e)
         when (cmdResult){
             false->{
@@ -48,4 +49,9 @@ object MyListener:ListenerHost{
     private fun whitelistCheck(gn:Long):Boolean{
         return gn in groupList.groupList
     }
+
+    private fun userStatueCheck(qq:Long):Boolean{
+        TODO()
+    }
+
 }

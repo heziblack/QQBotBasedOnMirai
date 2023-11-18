@@ -34,17 +34,13 @@ object CmdSignIn:Command{
     override val name: String = "签到"
     override val description: String = "完成每日签到，获取签到奖励哦，只接受群聊签到"
     override fun acceptable(e: MessageEvent): Boolean {
-        return if (e is GroupMessageEvent){
-//            println(e.message.content)
-            e.message[1].content == "签到"
-        }else false
+        if (e !is GroupMessageEvent){ return false }
+        if (e.message.size != 2) return false
+        return e.message[1].content == "签到"
     }
 
     override suspend fun action(e: MessageEvent) {
-        if (e !is GroupMessageEvent) {
-//            MyPluginMain.logger.info(e.javaClass.toString())
-            return
-        }
+        if (e !is GroupMessageEvent) { return }
         val user = dbh.getUser(e.sender.id, e.group.id, e.sender.nick)
         val lastSignIn = dbh.getUserSignIn(user)
         val newSignIn = newSignIn(user,lastSignIn)
@@ -113,13 +109,6 @@ object CmdHentaiPic:Command{
     private const val SETU_PRICE:Int = 70
     private const val URL_LOLICON = "https://api.lolicon.app/setu/v2?size=original&size=regular"
     private const val YHAPI = "http://api.yujn.cn/api/yht.php?type=image"
-    private val clientProxy = OkHttpClient.Builder()
-        .connectTimeout(50000,TimeUnit.MILLISECONDS)
-        .readTimeout(50000,TimeUnit.MILLISECONDS)
-        .followRedirects(true)
-        .followSslRedirects(true)
-        .proxy(Proxy(Proxy.Type.SOCKS, InetSocketAddress(proxyPort)))
-        .build()
     private val clientNormal = OkHttpClient.Builder()
         .connectTimeout(50000,TimeUnit.MILLISECONDS)
         .readTimeout(50000,TimeUnit.MILLISECONDS)
@@ -146,6 +135,7 @@ object CmdHentaiPic:Command{
                 e.group.sendMessage("抱歉，您的积分不足")
                 return
             }
+//            加入url选择
             val urls = YHAPI
             val bi = getImageProxy(urls)
             if (bi != null) {
@@ -198,7 +188,7 @@ object CmdHentaiPic:Command{
             opt.close()
         }
     }
-    private fun getSetuUrl():Map<String,String>?{
+    private fun getLoliconUrls():Map<String,String>?{
         val request = buildRequest(URL_LOLICON)
         val response = try{
             clientNormal.newCall(request).execute()
@@ -217,6 +207,11 @@ object CmdHentaiPic:Command{
             null
         }
     }
+
+    private fun getSetuUrlRebuild():String{
+        TODO()
+    }
+
     private fun buildRequest(url:String):Request{
         return Request.Builder().url(url)
             .method("GET",null)
@@ -243,12 +238,15 @@ object CmdHentaiPic:Command{
                 val buffer = ByteArray(1024*8)
                 val opt = ByteArrayOutputStream()
                 var n = ipt.read(buffer)
-                println("read buffer size:$n")
+                var count:Long = n.toLong()
+//                println("read buffer size:$n")
                 while(n!=-1){
                     opt.write(buffer,0,n)
                     n = ipt.read(buffer)
-                    println("read buffer size:$n")
+                    count+=n
+//                    println("read buffer size:$n")
                 }
+                MyPluginMain.logger.info("图像大小：${count}Byte")
                 ipt.close()
                 val ba = ByteArrayInputStream(opt.toByteArray()).use{
                     ImageIO.read(it)
@@ -280,6 +278,7 @@ object CmdWorkForMoney:Command{
         }else{
             g.sendMessage("您不能打工哦，要在群聊190772405才能打工")
         }
+
     }
 
 }

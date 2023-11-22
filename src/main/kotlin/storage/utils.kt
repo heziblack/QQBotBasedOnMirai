@@ -1,6 +1,7 @@
 package org.hezistudio.storage
 
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.plus
@@ -187,7 +188,7 @@ fun userWorkStatueCheck(id: Long):Boolean{
     }
 }
 fun loadGroupWhitelist(){
-    val gson = Gson()
+    val gson = GsonBuilder().setPrettyPrinting().create()
     if (groupListFile.exists() && groupListFile.isFile){
         val fromFile = groupListFile.reader().use {
             gson.fromJson(it, GroupWhitelist::class.java)

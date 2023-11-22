@@ -17,12 +17,9 @@ import org.hezistudio.MyPluginMain
 import org.hezistudio.storage.SetuBean
 import org.hezistudio.storage.User
 import org.hezistudio.storage.UserSignIn
-import org.hezistudio.storage.proxyPort
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.net.InetSocketAddress
-import java.net.Proxy
 import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
 import kotlin.math.pow
@@ -116,7 +113,6 @@ object CmdHentaiPic:Command{
         .followSslRedirects(true)
 //        .proxy(Proxy(Proxy.Type.SOCKS, InetSocketAddress(proxyPort)))
         .build()
-
     override fun acceptable(e: MessageEvent): Boolean {
         if (e !is GroupMessageEvent) return false
         val m = e.message
@@ -126,7 +122,6 @@ object CmdHentaiPic:Command{
         }
         return false
     }
-
     override suspend fun action(e: MessageEvent) {
         e as GroupMessageEvent
         val user = dbh.getUser(e.sender.id,e.group.id,e.sender.nick)
@@ -136,36 +131,25 @@ object CmdHentaiPic:Command{
                 return
             }
 //            加入url选择
-            val urls = YHAPI
+            val urls = randomUrl()
+            if (urls == ""){
+                sendLostMsg(e.group)
+                return
+            }
             val bi = getImageProxy(urls)
             if (bi != null) {
                 sendImage(e.group, bi)
-                dbh.addMoney(user, -SETU_PRICE.toLong())
-                e.group.sendMessage("扣除积分${SETU_PRICE}点")
+                val p = if (e.group.id == 190772405L){
+                    7
+                }else{
+                    SETU_PRICE
+                }
+                dbh.addMoney(user, -p.toLong())
+                e.group.sendMessage("扣除积分${p}点")
             } else {
                 MyPluginMain.logger.error("未加载到图片")
                 sendLostMsg(e.group)
             }
-//            if (urls == null) {
-//                MyPluginMain.logger.error("url 丢失")
-//                sendLostMsg(e.group)
-//            } else {
-//                val u = urls["regular"]
-//                if (u == null) {
-//                    MyPluginMain.logger.error("no regular size")
-//                    sendLostMsg(e.group)
-//                } else {
-//                    val bi = getImageProxy(u)
-//                    if (bi != null) {
-//                        sendImage(e.group, bi)
-//                        dbh.addMoney(user, -SETU_PRICE.toLong())
-//                        e.group.sendMessage("扣除积分${SETU_PRICE}点")
-//                    } else {
-//                        MyPluginMain.logger.error("未加载到图片")
-//                        sendLostMsg(e.group)
-//                    }
-//                }
-//            }
         }catch (exc:Exception){
             e.group.sendMessage("出错啦！")
             throw Exception(exc)
@@ -207,11 +191,19 @@ object CmdHentaiPic:Command{
             null
         }
     }
-
-    private fun getSetuUrlRebuild():String{
-        TODO()
+    private fun randomUrl():String{
+        return when((0..1).random()){
+            1 -> getLoliconUrl()
+            else -> {
+                YHAPI
+            }
+        }
     }
-
+    private fun getLoliconUrl():String{
+        val urls = getLoliconUrls()
+        val targetUrl = urls?.get("regular")
+        return targetUrl?:""
+    }
     private fun buildRequest(url:String):Request{
         return Request.Builder().url(url)
             .method("GET",null)

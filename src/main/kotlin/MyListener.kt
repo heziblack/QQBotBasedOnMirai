@@ -9,17 +9,12 @@ import org.hezistudio.storage.cmdDeal
 import org.hezistudio.storage.groupList
 import org.hezistudio.storage.syncCmdList
 import org.hezistudio.storage.userWorkStatueCheck
-import java.nio.file.Path
 
 object MyListener:ListenerHost{
-    val configPath: Path = MyPluginMain.configFolderPath
-    val dataPath: Path = MyPluginMain.dataFolderPath
     private val logger: MiraiLogger = MyPluginMain.logger
-
     @EventHandler
     suspend fun groupMessageHandler(e:GroupMessageEvent){
         if (!whitelistCheck(e.group.id)) return
-        // 加一个用户状态检查
         if (!userWorkStatueCheck(e.sender.id)) return
         val cmdResult = cmdDeal(e)
         when (cmdResult){
@@ -30,7 +25,6 @@ object MyListener:ListenerHost{
             true->{return}
         }
     }
-
     @EventHandler
     suspend fun syncMessage(e:GroupMessageSyncEvent){
         try{
@@ -39,6 +33,7 @@ object MyListener:ListenerHost{
                     logger.info("执行${cmd.name}指令")
                     cmd.action(e)
                     logger.info("执行完毕")
+                    return
                 }
             }
         }catch (exc:Exception){
@@ -47,7 +42,6 @@ object MyListener:ListenerHost{
             e.group.sendMessage("坏、坏掉了")
         }
     }
-
     private fun whitelistCheck(gn:Long):Boolean{
         return gn in groupList.groupList
     }

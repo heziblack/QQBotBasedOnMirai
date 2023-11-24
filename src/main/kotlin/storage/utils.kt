@@ -226,3 +226,4 @@ fun proxySetting():Int{
         0
     }
 }
+

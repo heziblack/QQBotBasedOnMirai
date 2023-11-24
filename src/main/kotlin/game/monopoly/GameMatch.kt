@@ -4,6 +4,10 @@ class GameMatch(
     val matchID:Long
 )
 {
-    var status:Status = Status.Free
+    /**对局状态*/
+    var status:MatchStatus = MatchStatus.Free
+    /**对局中当前行动的玩家*/
+    var thePlayer:MatchPlayer? = null
+
 
 }

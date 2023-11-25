@@ -34,20 +34,4 @@ fun drawSignIn(user: User, avatar:BufferedImage):BufferedImage{
 private fun colorAlphaZ(origin:Color):Color{
     return Color(origin.red,origin.green,origin.blue,0)
 }
-fun getImageFromUrl(url: String): BufferedImage? {
-    try {
-        val urlConnection = URL(url).openConnection() as HttpURLConnection
-        urlConnection.connectTimeout = 30000 // 设置连接超时时间为30秒
-        urlConnection.inputStream.use { inputStream ->
-            val byteOutputStream = ByteArrayOutputStream()
-            inputStream.copyTo(byteOutputStream)
-            val bytes = byteOutputStream.toByteArray()
-            val byteIn = ByteArrayInputStream(bytes)
-            return ImageIO.read(byteIn)
-        }
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
-    return null
-}
 

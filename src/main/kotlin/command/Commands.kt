@@ -133,7 +133,7 @@ object CmdHentaiPic:Command{
                 sendLostMsg(e.group)
                 return
             }
-            val bi = getImageFromUrl(urls)
+            val bi = getImageProxy(urls)
             if (bi != null) {
                 sendImage(e.group, bi)
                 val p = if (e.group.id == 190772405L){

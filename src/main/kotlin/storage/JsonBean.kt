@@ -126,5 +126,13 @@ class GroupWhitelist(
             this.groups.add(o)
         }
     }
-
 }
+
+class UserSignForDrawInfo(
+    val qq:Long,
+    val nick:String,
+    val money:Long,
+    val isSignIn:Boolean,
+    val workTime:Long,
+    val workPay:Long,
+)

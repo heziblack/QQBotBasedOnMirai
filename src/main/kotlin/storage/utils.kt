@@ -132,6 +132,15 @@ object DatabaseHelper{
         return transaction(db){ Work.find { UserWorks.qq eq id }.firstOrNull() }
     }
 
+    fun createUserWork(user:User):Work{
+        return transaction(db) {
+            userWork(user.qq)?:Work.new {
+                qq = user.qq
+                workStamp = currentDateTime
+            }
+        }
+    }
+
     fun userGoWorking(user: User,hour:Int){
         return transaction(db){
             val workInfo = userWork(user.qq)?:Work.new {

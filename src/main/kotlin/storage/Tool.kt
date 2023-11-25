@@ -3,11 +3,6 @@ package org.hezistudio.storage
 import java.awt.Color
 import java.awt.GradientPaint
 import java.awt.image.BufferedImage
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.net.HttpURLConnection
-import java.net.URL
-import javax.imageio.ImageIO
 
 private val colorList = arrayListOf<Color>(
     Color.WHITE, Color.ORANGE

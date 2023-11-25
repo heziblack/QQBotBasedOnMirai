@@ -18,7 +18,7 @@ enum class ThemeColor(
     val fontColor:Color,
 )
 {
-
+//    Dark
 }
 
 fun drawSignIn(user: User, avatar:BufferedImage):BufferedImage{
@@ -57,7 +57,7 @@ private fun colorAlphaZ(origin:Color):Color{
 }
 
 private fun drawUserNick(g2d:Graphics2D,userNick:String){
-    g2d.font = Font("",Font.PLAIN,34)
+    g2d.font = Font("幼圆",Font.PLAIN,60)
     g2d.drawString(userNick,50,50)
 }
 

@@ -1,6 +1,5 @@
 package org.hezistudio.command
 
-
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -14,9 +13,7 @@ import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.hezistudio.MyPluginMain
-import org.hezistudio.storage.SetuBean
-import org.hezistudio.storage.User
-import org.hezistudio.storage.UserSignIn
+import org.hezistudio.storage.*
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -25,7 +22,6 @@ import javax.imageio.ImageIO
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import org.hezistudio.storage.DatabaseHelper as dbh
-
 
 object CmdSignIn:Command{
     override val name: String = "签到"
@@ -48,6 +44,7 @@ object CmdSignIn:Command{
             dbh.addMoney(user,awards.toLong())
         }else if (lastSignIn.lastDate == newSignIn.lastDate){
             e.group.sendMessage("你已经签过到了, 今日获得签到积分${awards}点, 当前有${user.money}点")
+            return
         }else{
             e.group.sendMessage("签到成功, 你已连续签到${newSignIn.consecutiveDays}天, 获得积分${awards}点, 当前有${update}点")
             dbh.addMoney(user,awards.toLong())
@@ -136,7 +133,7 @@ object CmdHentaiPic:Command{
                 sendLostMsg(e.group)
                 return
             }
-            val bi = getImageProxy(urls)
+            val bi = getImageFromUrl(urls)
             if (bi != null) {
                 sendImage(e.group, bi)
                 val p = if (e.group.id == 190772405L){
@@ -155,10 +152,7 @@ object CmdHentaiPic:Command{
             throw Exception(exc)
         }
     }
-    private suspend fun sendLostMsg(g:Group){
-        g.sendMessage("链接丢失，跑到异次元啦！")
-    }
-    private suspend fun sendImage(g:Group,img:BufferedImage){
+    private suspend fun sendImage(g: Group, img: BufferedImage){
         val opt = ByteArrayOutputStream()
         withContext(Dispatchers.IO) {
             ImageIO.write(img, "PNG", opt)
@@ -171,6 +165,9 @@ object CmdHentaiPic:Command{
             exRes.close()
             opt.close()
         }
+    }
+    private suspend fun sendLostMsg(g:Group){
+        g.sendMessage("链接丢失，跑到异次元啦！")
     }
     private fun getLoliconUrls():Map<String,String>?{
         val request = buildRequest(URL_LOLICON)
@@ -249,6 +246,9 @@ object CmdHentaiPic:Command{
         }
         return null
     }
+
+
+
 }
 object CmdWorkForMoney:Command{
     override val name: String = "打工"
@@ -282,3 +282,5 @@ object CmdWorkForMoney:Command{
     }
 
 }
+
+

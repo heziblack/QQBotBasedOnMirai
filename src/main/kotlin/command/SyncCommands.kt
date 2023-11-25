@@ -59,8 +59,8 @@ object Test:SyncCommand{
         if (icon!=null){
             e.group.sendMessage("yes")
             val user = DatabaseHelper.getUser(e.sender.id,e.group.id,e.sender.nameCardOrNick)
-            val r = drawSignIn(user,icon)
-            sendImage(e.group,r)
+//            val r = drawSignIn(user,icon)
+//            sendImage(e.group,r)
         }else{
             e.group.sendMessage("no")
         }
@@ -95,7 +95,6 @@ object Test:SyncCommand{
         }
         return null
     }
-
 }
 
 object AddOrRemoveService:SyncCommand{

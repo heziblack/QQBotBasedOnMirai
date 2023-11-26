@@ -141,6 +141,12 @@ object DatabaseHelper{
         }
     }
 
+    fun hentaiCounter(user: User){
+        transaction {
+            user.hentai++
+        }
+    }
+
     fun userGoWorking(user: User,hour:Int){
         return transaction(db){
             val workInfo = userWork(user.qq)?:Work.new {

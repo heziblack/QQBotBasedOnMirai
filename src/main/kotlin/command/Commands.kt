@@ -23,6 +23,23 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 import org.hezistudio.storage.DatabaseHelper as dbh
 
+object CmdCommonUtils{
+    suspend fun sendImage(g: Group, img: BufferedImage){
+        val opt = ByteArrayOutputStream()
+        withContext(Dispatchers.IO) {
+            ImageIO.write(img, "PNG", opt)
+        }
+        val exRes = ByteArrayInputStream(opt.toByteArray()).use {
+            it.toExternalResource()
+        }
+        g.sendImage(exRes)
+        withContext(Dispatchers.IO) {
+            exRes.close()
+            opt.close()
+        }
+    }
+}
+
 object CmdSignIn:Command{
     override val name: String = "签到"
     override val description: String = "完成每日签到，获取签到奖励哦，只接受群聊签到"
@@ -110,6 +127,7 @@ object CmdHentaiPic:Command{
         .followSslRedirects(true)
 //        .proxy(Proxy(Proxy.Type.SOCKS, InetSocketAddress(proxyPort)))
         .build()
+    private var cold = false
     override fun acceptable(e: MessageEvent): Boolean {
         if (e !is GroupMessageEvent) return false
         val m = e.message
@@ -122,11 +140,17 @@ object CmdHentaiPic:Command{
     override suspend fun action(e: MessageEvent) {
         e as GroupMessageEvent
         val user = dbh.getUser(e.sender.id,e.group.id,e.sender.nick)
+        if (cold){
+            e.group.sendMessage("加载中，请稍后再试")
+            return
+        }
         try{
             if (user.money < SETU_PRICE) {
                 e.group.sendMessage("抱歉，您的积分不足")
                 return
             }
+            e.group.sendMessage("加载中，请耐心等待")
+            cold = true
 //            加入url选择
             val urls = randomUrl()
             if (urls == ""){
@@ -142,13 +166,16 @@ object CmdHentaiPic:Command{
                     SETU_PRICE
                 }
                 dbh.addMoney(user, -p.toLong())
+                dbh.hentaiCounter(user)
                 e.group.sendMessage("扣除积分${p}点")
             } else {
                 MyPluginMain.logger.error("未加载到图片")
                 sendLostMsg(e.group)
             }
+            cold = false
         }catch (exc:Exception){
             e.group.sendMessage("出错啦！")
+            cold = false
             throw Exception(exc)
         }
     }

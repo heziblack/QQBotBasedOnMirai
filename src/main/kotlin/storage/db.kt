@@ -18,6 +18,7 @@ object Users: IntIdTable(){
     val nick:Column<String> = varchar("nick",32)
     val firstRegisterGroup:Column<Long> = long("first_register_group")
     val money:Column<Long> = long("money").default(0L)
+    val hentaiCounter:Column<Long> = long("hentaiCounter").default(0L)
 }
 
 class User(id:EntityID<Int>):IntEntity(id){
@@ -26,6 +27,7 @@ class User(id:EntityID<Int>):IntEntity(id){
     var nick by Users.nick
     var firstRegisterGroup by Users.firstRegisterGroup
     var money by Users.money
+    var hentai by Users.hentaiCounter
 }
 
 object SignIns:LongIdTable(){

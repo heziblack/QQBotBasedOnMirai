@@ -12,7 +12,7 @@ object MyPluginMain : KotlinPlugin(
         JvmPluginDescription(
                 id = "org.hezistudio.groupManager",
                 name = "Hezi群管",
-                version = "0.1.1",
+                version = "0.1.2",
         ) {
             author("Hezi")
         }

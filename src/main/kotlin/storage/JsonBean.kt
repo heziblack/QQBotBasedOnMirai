@@ -135,4 +135,5 @@ class UserSignForDrawInfo(
     val isSignIn:Boolean,
     val workTime:Long,
     val workPay:Long,
+    val hentai:Long
 )

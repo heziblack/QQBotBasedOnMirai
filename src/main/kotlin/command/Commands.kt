@@ -14,16 +14,21 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.hezistudio.MyPluginMain
 import org.hezistudio.storage.*
+import java.awt.Graphics2D
+import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
 import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import org.hezistudio.storage.DatabaseHelper as dbh
 
-object CmdCommonUtils{
+class CmdCommonUtils{
     suspend fun sendImage(g: Group, img: BufferedImage){
         val opt = ByteArrayOutputStream()
         withContext(Dispatchers.IO) {
@@ -38,8 +43,41 @@ object CmdCommonUtils{
             opt.close()
         }
     }
-}
 
+    fun getImageFromUrl(url: String): BufferedImage? {
+        try {
+            val urlConnection = URL(url).openConnection() as HttpURLConnection
+            urlConnection.connectTimeout = 30000 // 设置连接超时时间为30秒
+            urlConnection.inputStream.use { inputStream ->
+                val byteOutputStream = ByteArrayOutputStream()
+                inputStream.copyTo(byteOutputStream)
+                val bytes = byteOutputStream.toByteArray()
+                val byteIn = ByteArrayInputStream(bytes)
+                return ImageIO.read(byteIn)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
+    }
+
+    fun resizeAvatar(originalImage:BufferedImage):BufferedImage{
+        // 创建一个新的BufferedImage对象，目标尺寸为640x640
+        val resizedImage = BufferedImage(640, 640, BufferedImage.TYPE_INT_ARGB)
+        // 创建一个Graphics2D对象来处理图像缩放
+        val g: Graphics2D = resizedImage.createGraphics()
+        // 设置抗锯齿和质量设置
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+        // 缩放原始图像至新图像
+        g.drawImage(originalImage, 0, 0, 640, 640, null)
+        // 清理并关闭Graphics2D对象
+        g.dispose()
+        return resizedImage
+    }
+
+}
 object CmdSignIn:Command{
     override val name: String = "签到"
     override val description: String = "完成每日签到，获取签到奖励哦，只接受群聊签到"
@@ -55,15 +93,25 @@ object CmdSignIn:Command{
         val lastSignIn = dbh.getUserSignIn(user)
         val newSignIn = newSignIn(user,lastSignIn)
         val awards = signInAwards(newSignIn.consecutiveDays)
-        val update = user.money + awards
+        val tool = CmdCommonUtils()
+        var userIcon = tool.getImageFromUrl(e.sender.avatarUrl)?: withContext(Dispatchers.IO) {
+            ImageIO.read(File(MyPluginMain.dataFolder, "DefaultAvatar.jpg"))
+        }
+        if (userIcon.width != 640){
+            userIcon = tool.resizeAvatar(userIcon)
+        }
         if (lastSignIn==null){
-            e.group.sendMessage("这是你第一天签到, 获得积分${awards}点")
+            val userInfo = getSignInfo(dbh.getUser(user))
+            val img = SignInPanel(userInfo,userIcon).create()
+            tool.sendImage(e.group,img)
             dbh.addMoney(user,awards.toLong())
         }else if (lastSignIn.lastDate == newSignIn.lastDate){
             e.group.sendMessage("你已经签过到了, 今日获得签到积分${awards}点, 当前有${user.money}点")
             return
         }else{
-            e.group.sendMessage("签到成功, 你已连续签到${newSignIn.consecutiveDays}天, 获得积分${awards}点, 当前有${update}点")
+            val userInfo = getSignInfo(dbh.getUser(user))
+            val img = SignInPanel(userInfo,userIcon).create()
+            tool.sendImage(e.group,img)
             dbh.addMoney(user,awards.toLong())
         }
     }
@@ -125,7 +173,6 @@ object CmdHentaiPic:Command{
         .readTimeout(50000,TimeUnit.MILLISECONDS)
         .followRedirects(true)
         .followSslRedirects(true)
-//        .proxy(Proxy(Proxy.Type.SOCKS, InetSocketAddress(proxyPort)))
         .build()
     private var cold = false
     override fun acceptable(e: MessageEvent): Boolean {
@@ -144,8 +191,13 @@ object CmdHentaiPic:Command{
             e.group.sendMessage("加载中，请稍后再试")
             return
         }
+        val p = if (e.group.id == 190772405L){
+            7
+        }else{
+            SETU_PRICE
+        }
         try{
-            if (user.money < SETU_PRICE) {
+            if (user.money < p) {
                 e.group.sendMessage("抱歉，您的积分不足")
                 return
             }
@@ -155,16 +207,12 @@ object CmdHentaiPic:Command{
             val urls = randomUrl()
             if (urls == ""){
                 sendLostMsg(e.group)
+                cold = false
                 return
             }
             val bi = getImageProxy(urls)
             if (bi != null) {
-                sendImage(e.group, bi)
-                val p = if (e.group.id == 190772405L){
-                    7
-                }else{
-                    SETU_PRICE
-                }
+                CmdCommonUtils().sendImage(e.group, bi)
                 dbh.addMoney(user, -p.toLong())
                 dbh.hentaiCounter(user)
                 e.group.sendMessage("扣除积分${p}点")
@@ -177,20 +225,6 @@ object CmdHentaiPic:Command{
             e.group.sendMessage("出错啦！")
             cold = false
             throw Exception(exc)
-        }
-    }
-    private suspend fun sendImage(g: Group, img: BufferedImage){
-        val opt = ByteArrayOutputStream()
-        withContext(Dispatchers.IO) {
-            ImageIO.write(img, "PNG", opt)
-        }
-        val exRes = ByteArrayInputStream(opt.toByteArray()).use {
-            it.toExternalResource()
-        }
-        g.sendImage(exRes)
-        withContext(Dispatchers.IO) {
-            exRes.close()
-            opt.close()
         }
     }
     private suspend fun sendLostMsg(g:Group){
@@ -273,39 +307,74 @@ object CmdHentaiPic:Command{
         }
         return null
     }
-
-
-
 }
 object CmdWorkForMoney:Command{
     override val name: String = "打工"
     override val description: String = "打工换取积分"
+    private val regex = Regex("打工 [1-9]")
+    private val regex2 = Regex("打工")
     override fun acceptable(e: MessageEvent): Boolean {
         if (e !is GroupMessageEvent) return false
         val msg = e.message
         if (msg.size != 2) return false
         val text = e.message[1].content
-        return text == "打工"
+        return if(regex.matches(text)){
+            true
+        }else{
+            regex2.matches(text)
+        }
     }
 
     override suspend fun action(e: MessageEvent) {
         e as GroupMessageEvent
         val g = e.group
-        if (g.id == 190772405L){
-//            g.sendMessage("功能还在开发中")
-            val hour = (1..8).random()
-            val user = dbh.getUser(e.sender.id, e.group.id, e.sender.nick)
-            dbh.userGoWorking(user,hour)
-            val workInfo = dbh.userWork(user.qq)!!
-            val userNew = dbh.getUser(user.qq,user.firstRegisterGroup,user.nick)
-            val salary = (hour*(0.8*hour + 10.0)).roundToInt()
-            e.group.sendMessage("随机打工${hour}小时，报酬${salary}积分\n" +
-                    "打工累计时间${workInfo.timer}小时，累计收益${workInfo.moneyCounter}积分\n" +
-                    "接下来${hour}小时内将不再响应您的指令，现有积分${userNew.money}")
-        }else{
-            g.sendMessage("您不能打工哦，要在群聊190772405才能打工")
+        val msg = e.message[1].content
+        val isRandom = regex.matches(msg)
+        val sb = StringBuilder()
+        if (!isRandom){
+            sb.append("随机")
         }
-
+        val hour = if (isRandom) {
+            msg.split(" ")[1].toInt()
+        }else{
+            (1..9).random()
+        }
+        val user = dbh.getUser(e.sender.id, e.group.id, e.sender.nick)
+        dbh.userGoWorking(user,hour)
+        val workInfo = dbh.userWork(user.qq)!!
+        val userNew = dbh.getUser(user.qq,user.firstRegisterGroup,user.nick)
+        val salary = (hour*(0.8*hour + 10.0)).roundToInt()
+        sb.append("打工${hour}小时，报酬${salary}\n")
+        sb.append("打工累计时间${workInfo.timer}小时，累计收益${workInfo.moneyCounter}积分\n")
+        sb.append("接下来${hour}小时内将不再响应您的指令，现有积分${userNew.money}")
+        g.sendMessage(sb.toString())
+//        e.group.sendMessage("随机打工${hour}小时，报酬${salary}积分\n" +
+//                "打工累计时间${workInfo.timer}小时，累计收益${workInfo.moneyCounter}积分\n" +
+//                "接下来${hour}小时内将不再响应您的指令，现有积分${userNew.money}")
+//        if (regex.matches(msg)){
+//            val hour = msg.split(" ")[1].toInt()
+//            val user = dbh.getUser(e.sender.id, e.group.id, e.sender.nick)
+//            dbh.userGoWorking(user,hour)
+//            val workInfo = dbh.userWork(user.qq)!!
+//            val userNew = dbh.getUser(user.qq,user.firstRegisterGroup,user.nick)
+//            val salary = (hour*(0.8*hour + 10.0)).roundToInt()
+//            e.group.sendMessage("随机打工${hour}小时，报酬${salary}积分\n" +
+//                    "打工累计时间${workInfo.timer}小时，累计收益${workInfo.moneyCounter}积分\n" +
+//                    "接下来${hour}小时内将不再响应您的指令，现有积分${userNew.money}")
+//        }
+//        if (g.id == 190772405L){
+//            val hour = (1..8).random()
+//            val user = dbh.getUser(e.sender.id, e.group.id, e.sender.nick)
+//            dbh.userGoWorking(user,hour)
+//            val workInfo = dbh.userWork(user.qq)!!
+//            val userNew = dbh.getUser(user.qq,user.firstRegisterGroup,user.nick)
+//            val salary = (hour*(0.8*hour + 10.0)).roundToInt()
+//            e.group.sendMessage("随机打工${hour}小时，报酬${salary}积分\n" +
+//                    "打工累计时间${workInfo.timer}小时，累计收益${workInfo.moneyCounter}积分\n" +
+//                    "接下来${hour}小时内将不再响应您的指令，现有积分${userNew.money}")
+//        }else{
+//            g.sendMessage("您不能打工哦，要在群聊190772405才能打工")
+//        }
     }
 
 }

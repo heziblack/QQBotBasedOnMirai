@@ -80,6 +80,10 @@ object DatabaseHelper{
         }
     }
 
+    fun getUser(user: User):User{
+        return findUser(user.qq)!!
+    }
+
     fun addMoney(user: User, add:Long){
         transaction(db){ user.money += add }
     }

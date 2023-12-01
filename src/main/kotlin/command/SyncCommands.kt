@@ -1,14 +1,17 @@
 package org.hezistudio.command
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import net.mamoe.mirai.event.events.GroupMessageSyncEvent
 import net.mamoe.mirai.message.data.At
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.data.content
-import net.mamoe.mirai.utils.ExternalResource
-import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
 import org.hezistudio.MyPluginMain
-import org.hezistudio.storage.*
-import java.io.File
+import org.hezistudio.storage.DatabaseHelper
+import org.hezistudio.storage.groupList
+import org.hezistudio.storage.saveGroupWhitelist
+import java.net.HttpURLConnection
+import java.net.URL
 
 object AwardByHost:SyncCommand{
     override val name: String = "奖励"
@@ -46,12 +49,7 @@ object Test:SyncCommand{
     }
 
     override suspend fun action(e: GroupMessageSyncEvent) {
-        val sf = File(MyPluginMain.dataFolder,"TestSound.mp3")
-        val exf = sf.toExternalResource()
-        val uploaded = e.group.uploadAudio(exf)
-        e.group.sendMessage(uploaded)
-//        e.group.
-//        e.group.uploadAudio()
+        e.group.sendMessage("Error!")
     }
 }
 object AddOrRemoveService:SyncCommand{

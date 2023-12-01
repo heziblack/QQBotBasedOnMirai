@@ -2,7 +2,10 @@ package org.hezistudio.storage
 
 import java.awt.image.BufferedImage
 import java.awt.*
+import java.awt.font.TextLayout
+import java.awt.geom.AffineTransform
 import java.awt.geom.Ellipse2D
+import java.awt.image.AffineTransformOp
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -26,6 +29,7 @@ class SignInPanel(var userSignForDrawInfo: UserSignForDrawInfo,
         drawEllipse(g2d,userSignForDrawInfo.workPay,80,400,"累计收益")
         drawEllipse(g2d,userSignForDrawInfo.workTime,230,400,"累计打工")
         drawEllipse(g2d,userSignForDrawInfo.hentai,380,400,"涩涩次数")
+//        textRoundTest()
         return base
     }
 
@@ -131,6 +135,31 @@ class SignInPanel(var userSignForDrawInfo: UserSignForDrawInfo,
 
     private fun colorAlphaZ(origin:Color):Color{
         return Color(origin.red,origin.green,origin.blue,0)
+    }
+
+    private fun textRoundTest(){
+        val text = "Hello world!"
+        val bounds = g2d.font.getStringBounds(text,g2d.fontRenderContext)
+        val centerX = (base.width - bounds.width)/2
+        val centerY = (base.height+bounds.height)/2
+        val radius = max(bounds.width,bounds.height)
+        val c = Ellipse2D.Double(centerX - radius, centerY - radius, radius * 2.0, radius * 2.0)
+        val layout = TextLayout(text, g2d.font, g2d.fontRenderContext)
+        val shape = layout.getOutline(AffineTransform.getTranslateInstance(centerX, centerY))
+        val transform = AffineTransform.getRotateInstance(Math.PI / 2.0, centerX, centerY)
+//        transform.transform(shape.getPathIterator(),shape.bounds2D )
+        val atOp = AffineTransformOp(transform, AffineTransformOp.TYPE_BILINEAR)
+
+//        atOp.filter(BufferedImage())
+        shape.getPathIterator(transform)
+//        shape.transform(transform)
+//        shape.
+        layout.draw(g2d, centerX.toFloat(), centerY.toFloat())
+
+        // 绘制圆形路径（可选）
+        g2d.color = Color.RED
+        g2d.stroke = BasicStroke(2f)
+        g2d.draw(c)
     }
 
 }

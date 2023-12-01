@@ -10,6 +10,7 @@ import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.data.content
 import net.mamoe.mirai.utils.ExternalResource.Companion.toExternalResource
+import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.hezistudio.MyPluginMain
@@ -20,8 +21,10 @@ import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
 import kotlin.math.pow
@@ -44,9 +47,9 @@ class CmdCommonUtils{
         }
     }
 
-    fun getImageFromUrl(url: String): BufferedImage? {
+    suspend fun getImageFromUrl(url: String): BufferedImage? {
         try {
-            val urlConnection = URL(url).openConnection() as HttpURLConnection
+            val urlConnection = withContext(Dispatchers.IO){ URL(url).openConnection() as HttpURLConnection }
             urlConnection.connectTimeout = 30000 // 设置连接超时时间为30秒
             urlConnection.inputStream.use { inputStream ->
                 val byteOutputStream = ByteArrayOutputStream()
@@ -86,7 +89,6 @@ object CmdSignIn:Command{
         if (e.message.size != 2) return false
         return e.message[1].content == "签到"
     }
-
     override suspend fun action(e: MessageEvent) {
         if (e !is GroupMessageEvent) { return }
         val user = dbh.getUser(e.sender.id, e.group.id, e.sender.nick)
@@ -100,22 +102,16 @@ object CmdSignIn:Command{
         if (userIcon.width != 640){
             userIcon = tool.resizeAvatar(userIcon)
         }
-        if (lastSignIn==null){
+        if (lastSignIn==null || lastSignIn.lastDate != newSignIn.lastDate){
+            dbh.addMoney(user,awards.toLong())
             val userInfo = getSignInfo(dbh.getUser(user))
             val img = SignInPanel(userInfo,userIcon).create()
             tool.sendImage(e.group,img)
-            dbh.addMoney(user,awards.toLong())
-        }else if (lastSignIn.lastDate == newSignIn.lastDate){
+        }else{
             e.group.sendMessage("你已经签过到了, 今日获得签到积分${awards}点, 当前有${user.money}点")
             return
-        }else{
-            val userInfo = getSignInfo(dbh.getUser(user))
-            val img = SignInPanel(userInfo,userIcon).create()
-            tool.sendImage(e.group,img)
-            dbh.addMoney(user,awards.toLong())
         }
     }
-
     private fun newSignIn(user: User, userSignIn: UserSignIn?):UserSignIn{
         return if (userSignIn!=null){
             dbh.updateUserSignIn(user)
@@ -123,7 +119,6 @@ object CmdSignIn:Command{
             dbh.createUserSignIn(user)
         }
     }
-
     private fun signInAwards(days:Int):Int{
         val d = days.toDouble()
         return when{
@@ -174,7 +169,6 @@ object CmdHentaiPic:Command{
         .followRedirects(true)
         .followSslRedirects(true)
         .build()
-    private var cold = false
     override fun acceptable(e: MessageEvent): Boolean {
         if (e !is GroupMessageEvent) return false
         val m = e.message
@@ -187,10 +181,6 @@ object CmdHentaiPic:Command{
     override suspend fun action(e: MessageEvent) {
         e as GroupMessageEvent
         val user = dbh.getUser(e.sender.id,e.group.id,e.sender.nick)
-        if (cold){
-            e.group.sendMessage("加载中，请稍后再试")
-            return
-        }
         val p = if (e.group.id == 190772405L){
             7
         }else{
@@ -202,28 +192,44 @@ object CmdHentaiPic:Command{
                 return
             }
             e.group.sendMessage("加载中，请耐心等待")
-            cold = true
-//            加入url选择
             val urls = randomUrl()
             if (urls == ""){
                 sendLostMsg(e.group)
-                cold = false
                 return
             }
             val bi = getImageProxy(urls)
             if (bi != null) {
-                CmdCommonUtils().sendImage(e.group, bi)
-                dbh.addMoney(user, -p.toLong())
-                dbh.hentaiCounter(user)
-                e.group.sendMessage("扣除积分${p}点")
+                var ls: Int
+                val imageFolder = File(MyPluginMain.dataFolder,"pixivImages").also {
+                    if (!(it.exists() && it.isDirectory)){
+                        Files.createDirectories(it.toPath())
+                    }
+                    ls = it.list()?.size ?: 0
+                }
+                val imageFile = File(imageFolder,"${ls+1}.jpg")
+                withContext(Dispatchers.IO) {
+                    ImageIO.write(ImageIO.read(bi),"JPG",imageFile)
+                    bi.close()
+                }
+                if (dbh.getUser(user).money>=p){
+                    withContext(Dispatchers.IO) {
+                        val er = imageFile.toExternalResource()
+                        e.group.sendMessage(er.uploadAsImage(e.group))
+                        er.close()
+                    }
+                    dbh.hentaiCounter(user)
+                    dbh.addMoney(user, -p.toLong())
+                    e.group.sendMessage("扣除积分${p}点")
+                }else{
+                    e.group.sendMessage("积分不足加载失败")
+                }
             } else {
                 MyPluginMain.logger.error("未加载到图片")
                 sendLostMsg(e.group)
             }
-            cold = false
         }catch (exc:Exception){
             e.group.sendMessage("出错啦！")
-            cold = false
+            MyPluginMain.logger.error(exc)
             throw Exception(exc)
         }
     }
@@ -268,44 +274,40 @@ object CmdHentaiPic:Command{
             .header("User-Agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0")
             .build()
     }
-    private fun getImageProxy(url:String):BufferedImage?{
-        val request = buildRequest(url)
-//        val response = if (proxyPort==0){
-//            clientNormal.newCall(request).execute()
-//        }else{
-//        clientProxy.newCall(request).execute()
-//        }
-        val response = clientNormal.newCall(request).execute()
-//        clientProxy.newCall(request).execute()
-        if (response.isSuccessful && response.code == 200){
-//            println("responseCode = 200")
-            if(response.body!=null){
-//                println("Not Empty Body")
-//            response.close()
-                val ipt = response.body!!.byteStream()
-//            val bytes = ipt.readBytes()
-//            println("getArray：${bytes.size}")
-                val buffer = ByteArray(1024*8)
-                val opt = ByteArrayOutputStream()
-                var n = ipt.read(buffer)
-                var count:Long = n.toLong()
-//                println("read buffer size:$n")
-                while(n!=-1){
-                    opt.write(buffer,0,n)
-                    n = ipt.read(buffer)
-                    count+=n
-//                    println("read buffer size:$n")
-                }
-                MyPluginMain.logger.info("图像大小：${count}Byte")
-                ipt.close()
-                val ba = ByteArrayInputStream(opt.toByteArray()).use{
-                    ImageIO.read(it)
-                }
-                opt.close()
-                return ba
-            }
+    private suspend fun getImageProxy(url:String):InputStream?{
+        val connect = withContext(Dispatchers.IO){
+            URL(url).openConnection().also {
+                it.connect()
+            } as HttpURLConnection
         }
-        return null
+        if (connect.responseCode in
+            (HttpURLConnection.HTTP_MULT_CHOICE..HttpURLConnection.HTTP_BAD_REQUEST)){
+            var second = withContext(Dispatchers.IO) {
+                URL(connect.getHeaderField("Location")).openConnection().also {
+                    it.connect()
+                } as HttpURLConnection
+            }
+            for (i in (1..10)) {
+                if (second.responseCode in
+                    (HttpURLConnection.HTTP_MULT_CHOICE..HttpURLConnection.HTTP_BAD_REQUEST)
+                ) {
+                    second = withContext(Dispatchers.IO) {
+                        URL(connect.getHeaderField("Location")).openConnection().also {
+                            it.connect()
+                        } as HttpURLConnection
+                    }
+                }else{
+                    break
+                }
+            }
+            return if (second.responseCode==200){
+                withContext(Dispatchers.IO){ second.inputStream }
+            }else{
+                null
+            }
+        }else{
+            return withContext(Dispatchers.IO){ connect.inputStream }
+        }
     }
 }
 object CmdWorkForMoney:Command{
@@ -378,5 +380,23 @@ object CmdWorkForMoney:Command{
     }
 
 }
+object CmdCardSearch:Command{
+    private val API:String = "https://ygocdb.com/api/v0/?search="
+    private val PIC_URL = "https://cdn.233.momobako.com/ygopro/pics/"
+    override val name: String
+        get() = TODO("Not yet implemented")
+    override val description: String
+        get() = TODO("Not yet implemented")
+
+    override fun acceptable(e: MessageEvent): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun action(e: MessageEvent) {
+        TODO("Not yet implemented")
+    }
+
+}
+
 
 

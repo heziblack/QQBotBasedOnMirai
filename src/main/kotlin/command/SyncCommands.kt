@@ -19,6 +19,11 @@ object AwardByHost:SyncCommand{
     private val regex = Regex("""[1-9][0-9]{0,5}""")
     override fun acceptable(e: GroupMessageSyncEvent): Boolean {
         // GroupMessageSyncEvent
+        MyPluginMain.logger.info("${e.client.id}:${e.client.info.deviceName}--${e.client.info.deviceKind}")
+        MyPluginMain.logger.info("消息数量${e.message.size}")
+        if (e.message.size==4){
+            MyPluginMain.logger.info(e.message[2].javaClass.name)
+        }
         if (e.message.size != 4) return false
         if (e.message[1] !is PlainText) return false
         if (e.message[1].content != "奖励") return false
@@ -71,7 +76,6 @@ object AddOrRemoveService:SyncCommand{
                 if (gid in gl){
                     e.group.sendMessage("本群已在服务范围中")
                 }else{
-//                    groupWhitelist.add(gid)
                     groupList.add(gid,0)
                     saveGroupWhitelist()
                     e.group.sendMessage("添加成功")
@@ -79,7 +83,6 @@ object AddOrRemoveService:SyncCommand{
             }
             cmds[1]->{
                 if (gid in gl){
-//                    groupWhitelist.remove(gid)
                     groupList.remove(gid)
                     saveGroupWhitelist()
                     e.group.sendMessage("移除成功")

@@ -19,8 +19,8 @@ object AwardByHost:SyncCommand{
     private val regex = Regex("""[1-9][0-9]{0,5}""")
     override fun acceptable(e: GroupMessageSyncEvent): Boolean {
         // GroupMessageSyncEvent
-        MyPluginMain.logger.info("${e.client.id}:${e.client.info.deviceName}--${e.client.info.deviceKind}")
-        MyPluginMain.logger.info("消息数量${e.message.size}")
+//        MyPluginMain.logger.info("${e.client.id}:${e.client.info.deviceName}--${e.client.info.deviceKind}")
+//        MyPluginMain.logger.info("消息数量${e.message.size}")
         if (e.message.size==4){
             MyPluginMain.logger.info(e.message[2].javaClass.name)
         }

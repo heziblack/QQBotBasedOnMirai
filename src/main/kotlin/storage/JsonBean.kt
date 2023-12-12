@@ -1,5 +1,7 @@
 package org.hezistudio.storage
 
+import java.time.Duration
+
 class SetuBean(
     val error:String?,
     val data:Array<PicData>
@@ -133,7 +135,31 @@ class UserSignForDrawInfo(
     val nick:String,
     val money:Long,
     val isSignIn:Boolean,
+    val consecutive:Int,
     val workTime:Long,
     val workPay:Long,
     val hentai:Long
+)
+
+class MaximVer10(
+    val code:Int,
+    val data:ArrayList<MaximVerSingle>
+)
+
+class MaximVerSingle(
+    val id:Long,
+    val text:String
+)
+
+class BeanPlant(
+    val seedName:String,
+    val plantName:String,
+    val purchasePrice:Int,
+    val salePrice:Int,
+    val plantGrowing:ArrayList<GrowingNode>
+)
+
+class GrowingNode(
+    val nodeName:String,
+    val takeTimeMinute:Long
 )

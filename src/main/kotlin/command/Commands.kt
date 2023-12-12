@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 import org.hezistudio.storage.DatabaseHelper as dbh
 
 class CmdCommonUtils{
@@ -173,7 +174,10 @@ object CmdHentaiPic:Command{
         if (e !is GroupMessageEvent) return false
         val m = e.message
         if (m.size != 2) return false
-        if (m[1] is PlainText && m[1].content == name){
+        if (m[1] !is PlainText) return false
+        if (m[1].content == name){
+            return true
+        }else if (m[1].content == "涩涩"){
             return true
         }
         return false
@@ -313,8 +317,30 @@ object CmdHentaiPic:Command{
 object CmdWorkForMoney:Command{
     override val name: String = "打工"
     override val description: String = "打工换取积分"
-    private val regex = Regex("打工 [1-9]")
+    private val regex = Regex("打工 ([1-9]|1[0-9]|2[0-4])")
     private val regex2 = Regex("打工")
+    private val mistake = arrayListOf(
+        Pair("由于你的疏忽，导致商品损坏，店主从工资中扣除损失金额。",0.8),
+        Pair("做家教时，学生家长不满意教学质量，扣减了部分课酬。",0.7),
+        Pair("在餐厅打工时，你误操作导致顾客食物浪费，老板因此扣减工资。",0.3),
+        Pair("兼职促销员未能达到销售目标，公司按照协议扣除相应提成。",0.35),
+        Pair("打印店兼职因操作失误打印了大量废纸，雇主要求承担成本并扣发相应工资。",0.2),
+        Pair("实习时在工作中犯了错误，丢失重要文件或泄露机密信息，导致雇主遭受损失，进而影响实习工资。",0.9),
+        Pair("打工无故缺勤或迟到早退，根据规定被扣除相应的工钱。",0.15),
+        Pair("发传单没有完成分配的任务量，雇主以此为由扣减报酬。",0.15),
+        Pair("作为快递员丢件或者送件延误，造成客户投诉，公司扣除工资。",0.35),
+        Pair("在酒店当保洁员未打扫干净房间，遭到客人投诉，酒店经理决定扣除一部分薪资作为惩罚。",0.20),
+        Pair("在健身房做兼职教练，因为学员满意度低而被减少工资。",0.26),
+        Pair("商场售货员盘点时发现货物数量不符，认为是你的失职，于是从你的工资中扣除差额。",0.85),
+        Pair("作为网站管理员发布有误的信息，导致网站信誉受损，被扣减工资。",0.60),
+        Pair("书店打工整理图书时不小心撕毁了封面，书店老板从中扣除了一部分工资来弥补损失。",0.15),
+        Pair("宠物店员工照看动物不当，导致宠物受伤，被扣除部分薪水以支付医疗费用。",0.21),
+        Pair("作为图书馆助理在归还书籍时放错了位置，需要花费额外时间寻找，图书馆主管决定扣除部分小时工资。",0.15),
+        Pair("兼职厨师烹饪的食物不符合卫生标准，被卫生检查部门罚款，老板因此扣你工资",0.75),
+        Pair("文案撰写人提交的文章内容存在抄袭行为，被雇主发现后扣除全部或部分稿酬。",0.85),
+        Pair("社交媒体营销实习生,发布的帖子违反了平台规定，导致账号被封禁，企业主因此扣除了你的工资。",0.86),
+        Pair("活动策划兼职者未能按时组织好活动，导致参与者不满，主办方从其工资中扣除一定比例。",0.5)
+    )
     override fun acceptable(e: MessageEvent): Boolean {
         if (e !is GroupMessageEvent) return false
         val msg = e.message
@@ -339,7 +365,7 @@ object CmdWorkForMoney:Command{
         val hour = if (isRandom) {
             msg.split(" ")[1].toInt()
         }else{
-            (1..9).random()
+            (1..24).random()
         }
         val user = dbh.getUser(e.sender.id, e.group.id, e.sender.nick)
         dbh.userGoWorking(user,hour)
@@ -350,33 +376,12 @@ object CmdWorkForMoney:Command{
         sb.append("打工累计时间${workInfo.timer}小时，累计收益${workInfo.moneyCounter}积分\n")
         sb.append("接下来${hour}小时内将不再响应您的指令，现有积分${userNew.money}")
         g.sendMessage(sb.toString())
-//        e.group.sendMessage("随机打工${hour}小时，报酬${salary}积分\n" +
-//                "打工累计时间${workInfo.timer}小时，累计收益${workInfo.moneyCounter}积分\n" +
-//                "接下来${hour}小时内将不再响应您的指令，现有积分${userNew.money}")
-//        if (regex.matches(msg)){
-//            val hour = msg.split(" ")[1].toInt()
-//            val user = dbh.getUser(e.sender.id, e.group.id, e.sender.nick)
-//            dbh.userGoWorking(user,hour)
-//            val workInfo = dbh.userWork(user.qq)!!
-//            val userNew = dbh.getUser(user.qq,user.firstRegisterGroup,user.nick)
-//            val salary = (hour*(0.8*hour + 10.0)).roundToInt()
-//            e.group.sendMessage("随机打工${hour}小时，报酬${salary}积分\n" +
-//                    "打工累计时间${workInfo.timer}小时，累计收益${workInfo.moneyCounter}积分\n" +
-//                    "接下来${hour}小时内将不再响应您的指令，现有积分${userNew.money}")
-//        }
-//        if (g.id == 190772405L){
-//            val hour = (1..8).random()
-//            val user = dbh.getUser(e.sender.id, e.group.id, e.sender.nick)
-//            dbh.userGoWorking(user,hour)
-//            val workInfo = dbh.userWork(user.qq)!!
-//            val userNew = dbh.getUser(user.qq,user.firstRegisterGroup,user.nick)
-//            val salary = (hour*(0.8*hour + 10.0)).roundToInt()
-//            e.group.sendMessage("随机打工${hour}小时，报酬${salary}积分\n" +
-//                    "打工累计时间${workInfo.timer}小时，累计收益${workInfo.moneyCounter}积分\n" +
-//                    "接下来${hour}小时内将不再响应您的指令，现有积分${userNew.money}")
-//        }else{
-//            g.sendMessage("您不能打工哦，要在群聊190772405才能打工")
-//        }
+        if (hour>=9 && (1..99).random()>70){
+            val m = mistake.random()
+            val pay = (salary*m.second + (-9..9).random()).roundToLong()
+            g.sendMessage(m.first+"\n扣除积分${pay}")
+            dbh.addMoney(user,-pay)
+        }
     }
 
 }
@@ -394,6 +399,38 @@ object CmdCardSearch:Command{
 
     override suspend fun action(e: MessageEvent) {
         TODO("Not yet implemented")
+    }
+}
+
+object CmdMaxim:Command{
+    override val name: String = "一言"
+    override val description: String = "获取随机每日一言"
+
+    override fun acceptable(e: MessageEvent): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun action(e: MessageEvent) {
+        TODO("Not yet implemented")
+    }
+
+    private suspend fun getMaxim():MaximVer10?{
+        try{
+            val maximUrl = "https://api.yujn.cn/api/yiyan.php"
+            val cnt = withContext(Dispatchers.IO) {
+                (URL(maximUrl).openConnection() as HttpURLConnection).also {
+                    it.connect()
+                }
+            }
+            if (cnt.responseCode != 200) {
+                println("连接失败")
+                return null
+            }
+            val string = withContext(Dispatchers.IO) { cnt.inputStream.bufferedReader().readText() }
+            return Gson().fromJson<MaximVer10>(string, MaximVer10::class.java)
+        }catch (e:Exception){
+            return null
+        }
     }
 
 }

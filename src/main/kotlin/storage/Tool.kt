@@ -38,6 +38,13 @@ enum class ThemeColor(
         Color(196, 85, 168),
         Color(169, 76, 99),
         Color(96, 53, 46)
+    ),
+    Mute(
+        Color(255, 255, 255),
+        Color(234, 166, 215),
+        Color(196, 85, 168),
+        Color(169, 76, 99),
+        Color(36, 53, 46)
     )
 }
 
@@ -49,6 +56,7 @@ fun getSignInfo(user: User):UserSignForDrawInfo{
         user.nick,
         user.money,
         signIn.lastDate == dbh.currentDateTime.date,
+        signIn.consecutiveDays,
         work.timer,
         work.moneyCounter,
         user.hentai
@@ -61,6 +69,7 @@ fun getSignInfo():UserSignForDrawInfo{
         arrayOf("盒子","涩中恶鬼","怎么办我爱你").random(),
         (0L..3000L).random(),
         false,
+        (0..100).random(),
         (0L..3000L).random(),
         (0L..3000L).random(),
         (0L..3000L).random(),

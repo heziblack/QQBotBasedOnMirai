@@ -339,7 +339,8 @@ object CmdWorkForMoney:Command{
         Pair("兼职厨师烹饪的食物不符合卫生标准，被卫生检查部门罚款，老板因此扣你工资",0.75),
         Pair("文案撰写人提交的文章内容存在抄袭行为，被雇主发现后扣除全部或部分稿酬。",0.85),
         Pair("社交媒体营销实习生,发布的帖子违反了平台规定，导致账号被封禁，企业主因此扣除了你的工资。",0.86),
-        Pair("活动策划兼职者未能按时组织好活动，导致参与者不满，主办方从其工资中扣除一定比例。",0.5)
+        Pair("活动策划兼职者未能按时组织好活动，导致参与者不满，主办方从其工资中扣除一定比例。",0.5),
+        Pair("在超市做收银员时，因操作失误导致商品价格计算错误，超市主管从中扣除一部分工资以弥补差额。",0.3),
     )
     override fun acceptable(e: MessageEvent): Boolean {
         if (e !is GroupMessageEvent) return false
@@ -376,9 +377,9 @@ object CmdWorkForMoney:Command{
         sb.append("打工累计时间${workInfo.timer}小时，累计收益${workInfo.moneyCounter}积分\n")
         sb.append("接下来${hour}小时内将不再响应您的指令，现有积分${userNew.money}")
         g.sendMessage(sb.toString())
-        if (hour>=9 && (1..99).random()>70){
+        if (hour>=9 && (1..99).random()>30){
             val m = mistake.random()
-            val pay = (salary*m.second + (-9..9).random()).roundToLong()
+            val pay = (salary*m.second*10 + (-9..9).random()).roundToLong()
             g.sendMessage(m.first+"\n扣除积分${pay}")
             dbh.addMoney(user,-pay)
         }
@@ -407,11 +408,49 @@ object CmdMaxim:Command{
     override val description: String = "获取随机每日一言"
 
     override fun acceptable(e: MessageEvent): Boolean {
-        TODO("Not yet implemented")
+        if (e !is GroupMessageEvent) return false
+        if (e.message.size != 2) return false
+        if (e.message[1] !is PlainText) return false
+        if ((e.message[1] as PlainText).content != name) return false
+//        if (e.group.id != 190772405L) return false
+        return true
     }
 
     override suspend fun action(e: MessageEvent) {
-        TODO("Not yet implemented")
+        e as GroupMessageEvent
+        val sb = StringBuilder()
+        val a = getMaximDirect()
+        if (a == null){
+            MyPluginMain.logger.error("一言：获取失败")
+            return
+        }
+        sb.append(a.trimMargin().replace("<br>",""))
+        e.group.sendMessage(sb.toString())
+    }
+    private suspend fun getMaximDirect():String?{
+        val api01 = "http://api.yujn.cn/api/sjyy.php"
+        val api02 = "http://api.yujn.cn/api/sc1.php"
+        val api03 = "http://api.yujn.cn/api/kfc.php"
+        val api04 = "http://api.yujn.cn/api/yan.php"
+        val al = arrayListOf(api01,api02,api03,api04)
+        return try{
+            val randomIndex = (1..al.size).random()
+            MyPluginMain.logger.info("api${randomIndex}:${al[randomIndex-1]}")
+            val maximUrl = al[randomIndex-1]
+            val cnt = withContext(Dispatchers.IO) {
+                (URL(maximUrl).openConnection() as HttpURLConnection).also {
+                    it.connect()
+                }
+            }
+            if (cnt.responseCode != 200) {
+                println("连接失败")
+                throw Exception()
+            }
+            val string = withContext(Dispatchers.IO) { cnt.inputStream.bufferedReader().readText() }
+            string
+        }catch (e:Exception){
+            null
+        }
     }
 
     private suspend fun getMaxim():MaximVer10?{

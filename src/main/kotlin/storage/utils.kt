@@ -171,7 +171,7 @@ object DatabaseHelper{
 }
 
 val cmdList:ArrayList<Command> = arrayListOf(
-    CmdSignIn, CmdBackpack, CmdHentaiPic, CmdWorkForMoney
+    CmdSignIn, CmdBackpack, CmdHentaiPic, CmdWorkForMoney, CmdMaxim
 )
 val syncCmdList:ArrayList<SyncCommand> = arrayListOf(
     AwardByHost, Test, AddOrRemoveService,HentaiCollect

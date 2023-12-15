@@ -54,6 +54,7 @@ object Test:SyncCommand{
     }
 
     override suspend fun action(e: GroupMessageSyncEvent) {
+        DatabaseHelper.clearZero()
         e.group.sendMessage("Error!")
     }
 }

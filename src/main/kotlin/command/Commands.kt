@@ -377,9 +377,9 @@ object CmdWorkForMoney:Command{
         sb.append("打工累计时间${workInfo.timer}小时，累计收益${workInfo.moneyCounter}积分\n")
         sb.append("接下来${hour}小时内将不再响应您的指令，现有积分${userNew.money}")
         g.sendMessage(sb.toString())
-        if (hour>=9 && (1..99).random()>30){
+        if (hour>=9 && (1..99).random()>50){
             val m = mistake.random()
-            val pay = (salary*m.second*10 + (-9..9).random()).roundToLong()
+            val pay = (salary*(1+m.second) + (-9..9).random()).roundToLong()
             g.sendMessage(m.first+"\n扣除积分${pay}")
             dbh.addMoney(user,-pay)
         }

@@ -168,6 +168,15 @@ object DatabaseHelper{
 
     }
 
+    fun clearZero() {
+        transaction(db) {
+            val q = User.find { Users.money less 0L }
+            for (i in q){
+                i.money = 0
+            }
+        }
+    }
+
 }
 
 val cmdList:ArrayList<Command> = arrayListOf(

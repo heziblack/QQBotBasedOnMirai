@@ -190,12 +190,12 @@ object CmdHentaiPic:Command{
         }else{
             SETU_PRICE
         }
+        if (user.money < p) {
+            e.group.sendMessage("抱歉，您的积分不足")
+            return
+        }
+        e.group.sendMessage("加载中，请耐心等待")
         try{
-            if (user.money < p) {
-                e.group.sendMessage("抱歉，您的积分不足")
-                return
-            }
-            e.group.sendMessage("加载中，请耐心等待")
             val urls = randomUrl()
             if (urls == ""){
                 sendLostMsg(e.group)
@@ -232,7 +232,7 @@ object CmdHentaiPic:Command{
                 sendLostMsg(e.group)
             }
         }catch (exc:Exception){
-            e.group.sendMessage("出错啦！")
+            e.group.sendMessage("出错啦！\n${exc.message}")
             MyPluginMain.logger.error(exc)
             throw Exception(exc)
         }
@@ -240,14 +240,13 @@ object CmdHentaiPic:Command{
     private suspend fun sendLostMsg(g:Group){
         g.sendMessage("链接丢失，跑到异次元啦！")
     }
-    private fun getLoliconUrls():Map<String,String>?{
+    private fun getLoliconUrls(time:Int=0):Map<String,String>?{
+        if (time>=10) return null
         val request = buildRequest(URL_LOLICON)
         val response = try{
             clientNormal.newCall(request).execute()
         }catch (e:Exception){
-            MyPluginMain.logger.error(e)
-            MyPluginMain.logger.error("lolicon请求失败")
-            return null
+            return getLoliconUrls(time+1)
         }
         return if (response.isSuccessful){
             val ipt = response.body!!.charStream()
@@ -256,7 +255,7 @@ object CmdHentaiPic:Command{
             val obj = gson.fromJson(a, SetuBean::class.java)
             obj.data[0].urls
         }else{
-            null
+            return getLoliconUrls(time+1)
         }
     }
     private fun randomUrl():String{
@@ -285,7 +284,7 @@ object CmdHentaiPic:Command{
             } as HttpURLConnection
         }
         if (connect.responseCode in
-            (HttpURLConnection.HTTP_MULT_CHOICE..HttpURLConnection.HTTP_BAD_REQUEST)){
+            (HttpURLConnection.HTTP_MULT_CHOICE until HttpURLConnection.HTTP_BAD_REQUEST)){
             var second = withContext(Dispatchers.IO) {
                 URL(connect.getHeaderField("Location")).openConnection().also {
                     it.connect()
@@ -293,7 +292,7 @@ object CmdHentaiPic:Command{
             }
             for (i in (1..10)) {
                 if (second.responseCode in
-                    (HttpURLConnection.HTTP_MULT_CHOICE..HttpURLConnection.HTTP_BAD_REQUEST)
+                    (HttpURLConnection.HTTP_MULT_CHOICE until HttpURLConnection.HTTP_BAD_REQUEST)
                 ) {
                     second = withContext(Dispatchers.IO) {
                         URL(connect.getHeaderField("Location")).openConnection().also {
@@ -307,7 +306,12 @@ object CmdHentaiPic:Command{
             return if (second.responseCode==200){
                 withContext(Dispatchers.IO){ second.inputStream }
             }else{
-                null
+                val durl = randomUrl()
+                if (durl!="") {
+                    getImageProxy(durl)
+                }else{
+                    null
+                }
             }
         }else{
             return withContext(Dispatchers.IO){ connect.inputStream }
@@ -377,7 +381,16 @@ object CmdWorkForMoney:Command{
         sb.append("打工累计时间${workInfo.timer}小时，累计收益${workInfo.moneyCounter}积分\n")
         sb.append("接下来${hour}小时内将不再响应您的指令，现有积分${userNew.money}")
         g.sendMessage(sb.toString())
-        if (hour>=9 && (1..99).random()>50){
+        val f = when(hour){
+            in 0..9 ->{
+                0.0
+            }
+            else ->{
+                (hour-9) * (70.0/15)
+            }
+        }
+        if (f < 1) return
+        if ((f+30) > (1..100).random()){
             val m = mistake.random()
             val pay = (salary*(1+m.second) + (-9..9).random()).roundToLong()
             g.sendMessage(m.first+"\n扣除积分${pay}")
@@ -471,7 +484,6 @@ object CmdMaxim:Command{
             return null
         }
     }
-
 }
 
 

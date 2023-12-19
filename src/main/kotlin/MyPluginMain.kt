@@ -12,7 +12,7 @@ object MyPluginMain : KotlinPlugin(
         JvmPluginDescription(
                 id = "org.hezistudio.groupManager",
                 name = "Hezi群管",
-                version = "0.1.2",
+                version = "0.1.3",
         ) {
             author("Hezi")
         }
@@ -24,4 +24,10 @@ object MyPluginMain : KotlinPlugin(
         loadGroupWhitelist()
         DatabaseHelper
     }
+
+    override fun onDisable() {
+        super.onDisable()
+
+    }
+
 }

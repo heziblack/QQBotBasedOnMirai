@@ -1,7 +1,7 @@
 package org.hezistudio.game.farm
 
-import org.hezistudio.game.farm.plants.Plant
+import org.hezistudio.game.farm.plants.PlantModule
 
 class FarmField {
-    val plant: Plant? = null
+//    val plant: PlantModule? = null
 }

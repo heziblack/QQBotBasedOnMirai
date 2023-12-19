@@ -150,16 +150,3 @@ class MaximVerSingle(
     val id:Long,
     val text:String
 )
-
-class BeanPlant(
-    val seedName:String,
-    val plantName:String,
-    val purchasePrice:Int,
-    val salePrice:Int,
-    val plantGrowing:ArrayList<GrowingNode>
-)
-
-class GrowingNode(
-    val nodeName:String,
-    val takeTimeMinute:Long
-)

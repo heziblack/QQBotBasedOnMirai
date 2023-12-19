@@ -400,8 +400,8 @@ object CmdWorkForMoney:Command{
 
 }
 object CmdCardSearch:Command{
-    private val API:String = "https://ygocdb.com/api/v0/?search="
-    private val PIC_URL = "https://cdn.233.momobako.com/ygopro/pics/"
+    private val apiHead:String = "https://ygocdb.com/api/v0/?search="
+    private val picHead = "https://cdn.233.momobako.com/ygopro/pics/"
     override val name: String
         get() = TODO("Not yet implemented")
     override val description: String
